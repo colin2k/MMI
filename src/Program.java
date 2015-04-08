@@ -10,6 +10,7 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.PriorityQueue;
 
 public class Program {
 
@@ -25,6 +26,9 @@ public class Program {
 		double endKruskalTime=0;
 
 		try {
+
+			
+
 			// reading file
 			BufferedReader in = new BufferedReader(new FileReader(
 					"graphen/G_100_200.txt"));
@@ -34,6 +38,7 @@ public class Program {
 			Node startNode = g.getNode(1);
 			//System.out.println(startNode.getOutgoingEdges());
 
+
 			startPrimTime = System.nanoTime();
 			Graph primGraph = g.prim(startNode);
 			endPrimTime = System.nanoTime();
@@ -41,10 +46,9 @@ public class Program {
 			double msPrimDuration = (endPrimTime-startPrimTime)/1000000; //in ms
 			double sPrimDuration = msPrimDuration/1000; //in s
 
-			System.out.println("\n\nPrim done in:");
-			System.out.println("Prim-Weight:"+primGraph.getTotalWeight());
-			System.out.println(String.valueOf(sPrimDuration) +  " s");
-
+			System.out.println("\n\nPrim done in: \t\t"+String.valueOf(sPrimDuration) +  " s");
+			System.out.println("Prim-Weight: \t\t"+primGraph.getTotalWeight());
+//			System.out.println(primGraph);
 
 			startKruskalTime = System.nanoTime();
 			Graph kruskalGraph = g.kruskal();
@@ -53,9 +57,9 @@ public class Program {
 			double msKruskalDuration = (endKruskalTime-startKruskalTime)/1000000; //in ms
 			double sKruskalDuration = msKruskalDuration/1000; //in s
 
-			System.out.println("\n\nKruskal done in:");
-			System.out.println("Kruskal-Weight:"+kruskalGraph.getTotalWeight());
-			System.out.println(String.valueOf(sKruskalDuration) +  " s");
+			System.out.println("\n\nKruskal done in: \t"+String.valueOf(sKruskalDuration) +  " s");
+			System.out.println("Kruskal-Weight: \t"+kruskalGraph.getTotalWeight());
+			//System.out.println(kruskalGraph);
 
 
 
