@@ -2,9 +2,10 @@
  * GraphenBibliothek
  * 
  * @author Oliver Colin Sauer
- * @MIS
+ *
+ * MIS
  * 
- * @Class Edge
+ * Class Edge
  */
 
 public class Edge {
