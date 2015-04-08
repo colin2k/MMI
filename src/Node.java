@@ -14,18 +14,15 @@ public class Node {
 
 	private int index;
 	private boolean visited = false;
-	private double weight;
-	private List<Edge> incommingEdges;
-	private List<Edge> outgoingEdges;
+	private List<Edge> edges;
 
 	/**
 	 * Construct for Node
 	 * 
-	 * @param int
+	 * @param index
 	 */
 	public Node(int index) {
-		this.incommingEdges = new Vector<Edge>();
-		this.outgoingEdges = new Vector<Edge>();
+		this.edges = new Vector<>();
 		this.index = index;
 	}
 
@@ -76,37 +73,20 @@ public class Node {
 	/**
 	 * Add Incoming Edge to List
 	 * 
-	 * @param Edge
+	 * @param e
 	 */
-	public void addIncomingEdge(Edge e) {
-		this.incommingEdges.add(e);
+	public void addEdge(Edge e) {
+		this.edges.add(e);
 	}
 
-	/**
-	 * Add Outgoing Edge to List
-	 * 
-	 * @param Edge
-	 */
-	public void addOutgoingEdge(Edge e) {
-		this.outgoingEdges.add(e);
-	}
-
-	/**
-	 * Get Incoming Edges
-	 * 
-	 * @return List<Edge> IncomingEdges
-	 */
-	public List<Edge> getIncomingEdges() {
-		return this.incommingEdges;
-	}
 
 	/**
 	 * Get Outgoing Edges
 	 * 
-	 * @return List<Edge> OutgoingEdges
+	 * @return List<Edge> edges
 	 */
-	public List<Edge> getOutgoingEdges() {
-		return this.outgoingEdges;
+	public List<Edge> getEdges() {
+		return this.edges;
 	}
 
 }

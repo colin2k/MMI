@@ -20,6 +20,8 @@ public class Graph {
     private List<Node> nodes;
     private List<Edge> edges;
 
+    private double totalWeight = 0;
+
     private Comparator<Edge> edgeComparator = new Comparator<Edge>() {
         @Override
         public int compare(Edge e1, Edge e2) {
@@ -62,6 +64,9 @@ public class Graph {
     }
 
 
+    public double getTotalWeight(){
+        return this.totalWeight;
+    }
     public String toString() {
         String result = "Nodes: [";
         for (Node n : this.nodes) {
@@ -122,9 +127,8 @@ public class Graph {
                                         this.nodes.get(i));
 
                                 // adding Edge to Graph
-                                this.nodes.get(currentNode).addOutgoingEdge(
-                                        newEdge);
-                                this.nodes.get(i).addIncomingEdge(newEdge);
+                                this.nodes.get(currentNode).addEdge(newEdge);
+                                this.nodes.get(i).addEdge(newEdge);
 
                                 this.addEdge(newEdge);
 
@@ -142,8 +146,8 @@ public class Graph {
 
                     Edge newEdge = new Edge(nodeFrom, nodeTo);
 
-                    nodeFrom.addOutgoingEdge(newEdge);
-                    nodeTo.addIncomingEdge(newEdge);
+                    nodeFrom.addEdge(newEdge);
+                    nodeTo.addEdge(newEdge);
                     this.addEdge(newEdge);
                 } else if (fileType == EDGE_LIST_WEIGHT) {
                     String[] straBuf = currentLine.split("\\s");
@@ -153,8 +157,8 @@ public class Graph {
 
                     Edge newEdge = new Edge(nodeFrom, nodeTo, Double.parseDouble(straBuf[2]));
 
-                    nodeFrom.addOutgoingEdge(newEdge);
-                    nodeTo.addIncomingEdge(newEdge);
+                    nodeFrom.addEdge(newEdge);
+                    nodeTo.addEdge(newEdge);
                     this.addEdge(newEdge);
                 } else {
                     System.out.println("Fehler: Falscher Dateityp");
@@ -220,7 +224,7 @@ public class Graph {
 
         // check incoming edges
         // only non directed graphs
-        for (Edge currentEdge : start.getIncomingEdges()) {
+        for (Edge currentEdge : start.getEdges()) {
 
             // if start Node of currentEdge has not been visited
             if (!currentEdge.getStart().getVisited()) {
@@ -243,7 +247,7 @@ public class Graph {
 
 
         // check outgoing edges
-        for (Edge currentEdge : start.getOutgoingEdges()) {
+        for (Edge currentEdge : start.getEdges()) {
 
             // if end Node of the current Edge has not been visited
             if (!currentEdge.getEnd().getVisited()) {
@@ -292,7 +296,7 @@ public class Graph {
             tmpNode = llNodes.pop();
 
             // for each incoming edge in current node as currentEdge
-            for (Edge currentEdge : tmpNode.getIncomingEdges()) {
+            for (Edge currentEdge : tmpNode.getEdges()) {
 
                 // if end of current Edge not in result-graph
                 if (!(currentEdge.getStart().getVisited())) {
@@ -309,24 +313,6 @@ public class Graph {
                     result.addEdge(currentEdge);
                 }
             }
-
-            // for each outgoing edge in current node as currentEdge
-            for (Edge currentEdge : tmpNode.getOutgoingEdges()) {
-
-                // if end of current Edge not in result-graph
-                if (!(currentEdge.getEnd().getVisited())) {
-
-                    // put end of current Edge on stack
-                    llNodes.add(currentEdge.getEnd());
-
-                    // add end of current Edge to result Graph
-                    result.addNode(currentEdge.getEnd());
-
-                    // add current Edge to result Graph
-                    result.addEdge(currentEdge);
-                }
-            }
-
         }
 
         return result;
@@ -341,8 +327,8 @@ public class Graph {
         Graph result = new Graph();
         result.addNode(start);
 
-        PriorityQueue<Edge> prioEdgeQueue = new PriorityQueue<>(start.getOutgoingEdges().size(), this.edgeComparator);
-        prioEdgeQueue.addAll(start.getOutgoingEdges());
+        PriorityQueue<Edge> prioEdgeQueue = new PriorityQueue<>(start.getEdges().size(), this.edgeComparator);
+        prioEdgeQueue.addAll(start.getEdges());
 
         start.visit();
 
@@ -351,20 +337,21 @@ public class Graph {
                     !currentEdge.getStart().getVisited()) {
 
                 result.addEdge(currentEdge);
+                result.totalWeight +=currentEdge.getWeight();
 
                 currentEdge.getStart().visit();
                 result.addNode(currentEdge.getStart());
-                for (Edge nextEdge : currentEdge.getStart().getOutgoingEdges()) {
+                for (Edge nextEdge : currentEdge.getStart().getEdges()) {
                     prioEdgeQueue.add(nextEdge);
                 }
 
             } else if (!currentEdge.getEnd().getVisited() &&
                     currentEdge.getStart().getVisited()) {
                 result.addEdge(currentEdge);
-
+                result.totalWeight +=currentEdge.getWeight();
                 currentEdge.getEnd().visit();
                 result.addNode(currentEdge.getEnd());
-                for (Edge nextEdge : currentEdge.getEnd().getOutgoingEdges()) {
+                for (Edge nextEdge : currentEdge.getEnd().getEdges()) {
                     prioEdgeQueue.add(nextEdge);
                 }
             }
@@ -387,9 +374,11 @@ public class Graph {
         for (Edge e : prioEdgeQueue) {
 
             if (!unionFinder.connected(e.getStart(), e.getEnd())) {
-                e.getStart().addOutgoingEdge(e);
-                e.getEnd().addIncomingEdge(e);
+                e.getStart().addEdge(e);
+                e.getEnd().addEdge(e);
                 result.addEdge(e);
+                result.totalWeight +=e.getWeight();
+
                 unionFinder.union(e.getStart(), e.getEnd());
             }
         }

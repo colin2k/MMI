@@ -33,12 +33,12 @@ public class Program {
 			//System.out.println(startNode.getOutgoingEdges());
 
 			startTime = System.nanoTime();
-			Graph testGraph = g.prim(startNode);
+			Graph testGraph = g.kruskal();
 			endTime = System.nanoTime();
 
 			System.out.println("Nodes:"+testGraph.getNodes().size());
 			System.out.println("Edges:"+testGraph.getEdges().size());
-			//System.out.println("Graph:\n"+testGraph);
+			System.out.println("Graph-Weight:\n"+testGraph.getTotalWeight());
 
 
 			in.close();
