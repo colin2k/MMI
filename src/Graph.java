@@ -20,12 +20,12 @@ public class Graph {
     private List<Node> nodes;
     private List<Edge> edges;
 
-    private double totalWeight = 0;
+    private Double totalWeight;
 
     private Comparator<Edge> edgeComparator = new Comparator<Edge>() {
         @Override
         public int compare(Edge e1, Edge e2) {
-            return e1.compare(e2);
+            return Double.compare(e1.getWeight(), e2.getWeight());
         }
     };
 
@@ -33,8 +33,9 @@ public class Graph {
      * empty construct - initialize node list - initialize edge list
      */
     public Graph() {
-        this.nodes = new Vector<Node>();
-        this.edges = new Vector<Edge>();
+        this.nodes = new Vector<>();
+        this.edges = new Vector<>();
+        this.totalWeight = Double.valueOf(0);
     }
 
     public Graph(List<Node> n, List<Edge> e) {
@@ -57,16 +58,21 @@ public class Graph {
      * @param fileType int (AD_MATRIX | EDGE_LIST)
      */
     public Graph(BufferedReader source, int fileType) {
-        this.nodes = new Vector<Node>();
-        this.edges = new Vector<Edge>();
+        this.nodes = new Vector<>();
+        this.edges = new Vector<>();
 
         this.initFromSource(source, fileType);
     }
 
 
-    public double getTotalWeight(){
+    public Double getTotalWeight() {
         return this.totalWeight;
     }
+
+    private void addToTotalWeight(Double weight) {
+        this.totalWeight += weight;
+    }
+
     public String toString() {
         String result = "Nodes: [";
         for (Node n : this.nodes) {
@@ -106,6 +112,7 @@ public class Graph {
         try {
             // get number of nodes from first line
             int nodeCount = Integer.parseInt(source.readLine());
+
             for (int i = 0; i < nodeCount; i++) {
                 // create Node and add to Graph
                 this.addNode(new Node(i));
@@ -157,9 +164,11 @@ public class Graph {
 
                     Edge newEdge = new Edge(nodeFrom, nodeTo, Double.parseDouble(straBuf[2]));
 
+
                     nodeFrom.addEdge(newEdge);
                     nodeTo.addEdge(newEdge);
                     this.addEdge(newEdge);
+
                 } else {
                     System.out.println("Fehler: Falscher Dateityp");
                 }
@@ -327,7 +336,8 @@ public class Graph {
         Graph result = new Graph();
         result.addNode(start);
 
-        PriorityQueue<Edge> prioEdgeQueue = new PriorityQueue<>(start.getEdges().size(), this.edgeComparator);
+        PriorityQueue<Edge> prioEdgeQueue = new PriorityQueue<>();
+
         prioEdgeQueue.addAll(start.getEdges());
 
         start.visit();
@@ -337,7 +347,7 @@ public class Graph {
                     !currentEdge.getStart().getVisited()) {
 
                 result.addEdge(currentEdge);
-                result.totalWeight +=currentEdge.getWeight();
+                result.addToTotalWeight(currentEdge.getWeight());
 
                 currentEdge.getStart().visit();
                 result.addNode(currentEdge.getStart());
@@ -348,7 +358,7 @@ public class Graph {
             } else if (!currentEdge.getEnd().getVisited() &&
                     currentEdge.getStart().getVisited()) {
                 result.addEdge(currentEdge);
-                result.totalWeight +=currentEdge.getWeight();
+                result.addToTotalWeight(currentEdge.getWeight());
                 currentEdge.getEnd().visit();
                 result.addNode(currentEdge.getEnd());
                 for (Edge nextEdge : currentEdge.getEnd().getEdges()) {
@@ -366,26 +376,37 @@ public class Graph {
         Graph result = new Graph();
 
         // initialize union-find structure as HashMap<Node,HashSet<Node>
-        UnionFind unionFinder = new UnionFind(this.nodes);
+        UnionFind unionFinder = new UnionFind(this.getNodes());
 
-        PriorityQueue<Edge> prioEdgeQueue = new PriorityQueue<>(this.edges.size(), this.edgeComparator);
+        PriorityQueue<Edge> prioEdgeQueue = new PriorityQueue<>();
+
+
         prioEdgeQueue.addAll(this.getEdges());
+        //prioEdgeQueue.addAll(this.getEdges());
 
-        for (Edge e : prioEdgeQueue) {
 
+
+        for (Edge e = prioEdgeQueue.remove();!prioEdgeQueue.isEmpty();e = prioEdgeQueue.remove()) {
             if (!unionFinder.connected(e.getStart(), e.getEnd())) {
+                unionFinder.union(e.getStart(), e.getEnd());
+                if (!e.getEnd().getVisited()) {
+                    result.addNode(e.getEnd());
+                }
+                if (!e.getStart().getVisited()) {
+                    result.addNode(e.getStart());
+                }
+                e.getStart().visit();
+                e.getEnd().visit();
                 e.getStart().addEdge(e);
                 e.getEnd().addEdge(e);
-                result.addEdge(e);
-                result.totalWeight +=e.getWeight();
 
-                unionFinder.union(e.getStart(), e.getEnd());
+                result.addEdge(e);
+                result.addToTotalWeight(e.getWeight());
+
+
             }
         }
 
-        for(Node n :unionFinder.getNodes()){
-            result.addNode(n);
-        }
         return result;
     }
 

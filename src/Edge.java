@@ -1,3 +1,5 @@
+import java.util.Comparator;
+
 /**
  * GraphenBibliothek
  * 
@@ -8,11 +10,11 @@
  * Class Edge
  */
 
-public class Edge {
+public class Edge implements Comparable<Edge> {
 	
 	private Node start;
 	private Node end;
-	private double weight = Double.NaN;
+	private Double weight = Double.NaN;
 
 	// Node i connects with Node j
 	public Edge(Node i, Node j) {
@@ -21,10 +23,14 @@ public class Edge {
 	}
 
 	// Node i connects with Node j with weight w
-	public Edge(Node i, Node j, double w) {
+	public Edge(Node i, Node j, Double w) {
 		this.start = i;
 		this.end = j;
 		this.weight = w;
+	}
+	public int compareTo(Edge e1){
+		//System.out.println(this.weight+" : "+ e1.weight+":"+Double.compare(this.weight, e1.weight));
+		return Double.compare(this.weight, e1.weight);
 	}
 
 	// returns weight

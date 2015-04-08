@@ -10,6 +10,7 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.PriorityQueue;
 
 public class Program {
 
@@ -19,26 +20,47 @@ public class Program {
 
 	public static void main(String[] args) {
 
-		double startTime=0;
-		double endTime=0;
-
+		double startPrimTime=0;
+		double endPrimTime=0;
+		double startKruskalTime=0;
+		double endKruskalTime=0;
 
 		try {
+
+			
+
 			// reading file
 			BufferedReader in = new BufferedReader(new FileReader(
 					"graphen/G_100_200.txt"));
 
 			Graph g = new Graph(in, EDGE_LIST_WEIGHT);
-			Node startNode = g.getNode(0);
+
+			Node startNode = g.getNode(1);
 			//System.out.println(startNode.getOutgoingEdges());
 
-			startTime = System.nanoTime();
-			Graph testGraph = g.kruskal();
-			endTime = System.nanoTime();
 
-			System.out.println("Nodes:"+testGraph.getNodes().size());
-			System.out.println("Edges:"+testGraph.getEdges().size());
-			System.out.println("Graph-Weight:\n"+testGraph.getTotalWeight());
+			startPrimTime = System.nanoTime();
+			Graph primGraph = g.prim(startNode);
+			endPrimTime = System.nanoTime();
+
+			double msPrimDuration = (endPrimTime-startPrimTime)/1000000; //in ms
+			double sPrimDuration = msPrimDuration/1000; //in s
+
+			System.out.println("\n\nPrim done in: \t\t"+String.valueOf(sPrimDuration) +  " s");
+			System.out.println("Prim-Weight: \t\t"+primGraph.getTotalWeight());
+//			System.out.println(primGraph);
+
+			startKruskalTime = System.nanoTime();
+			Graph kruskalGraph = g.kruskal();
+			endKruskalTime = System.nanoTime();
+
+			double msKruskalDuration = (endKruskalTime-startKruskalTime)/1000000; //in ms
+			double sKruskalDuration = msKruskalDuration/1000; //in s
+
+			System.out.println("\n\nKruskal done in: \t"+String.valueOf(sKruskalDuration) +  " s");
+			System.out.println("Kruskal-Weight: \t"+kruskalGraph.getTotalWeight());
+			//System.out.println(kruskalGraph);
+
 
 
 			in.close();
@@ -50,16 +72,12 @@ public class Program {
 		} catch (ArrayIndexOutOfBoundsException e) {
 
 			System.out.println("Startknoten nicht gefunden");
+			System.out.println(e);
+
 		}
 
-		double msDuration = (endTime-startTime)/1000000; //in ms
-		double sDuration = msDuration/1000; //in s
-		double mDuration = sDuration/60; //in m
 
-		System.out.println("\n\ndone in:");
-		System.out.println(String.valueOf(msDuration)+ " ms");
-		System.out.println(String.valueOf(sDuration) +  " s");
-		System.out.println(String.valueOf(mDuration) +  " m");
+
 
 	}
 
