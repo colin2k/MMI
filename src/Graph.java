@@ -67,6 +67,10 @@ public class Graph {
     public double getTotalWeight(){
         return this.totalWeight;
     }
+
+    private void addToTotalWeight(double weight){
+        this.totalWeight+=weight;
+    }
     public String toString() {
         String result = "Nodes: [";
         for (Node n : this.nodes) {
@@ -106,6 +110,7 @@ public class Graph {
         try {
             // get number of nodes from first line
             int nodeCount = Integer.parseInt(source.readLine());
+
             for (int i = 0; i < nodeCount; i++) {
                 // create Node and add to Graph
                 this.addNode(new Node(i));
@@ -337,7 +342,7 @@ public class Graph {
                     !currentEdge.getStart().getVisited()) {
 
                 result.addEdge(currentEdge);
-                result.totalWeight +=currentEdge.getWeight();
+                result.addToTotalWeight(currentEdge.getWeight());
 
                 currentEdge.getStart().visit();
                 result.addNode(currentEdge.getStart());
@@ -348,7 +353,7 @@ public class Graph {
             } else if (!currentEdge.getEnd().getVisited() &&
                     currentEdge.getStart().getVisited()) {
                 result.addEdge(currentEdge);
-                result.totalWeight +=currentEdge.getWeight();
+                result.addToTotalWeight(currentEdge.getWeight());
                 currentEdge.getEnd().visit();
                 result.addNode(currentEdge.getEnd());
                 for (Edge nextEdge : currentEdge.getEnd().getEdges()) {
@@ -366,9 +371,9 @@ public class Graph {
         Graph result = new Graph();
 
         // initialize union-find structure as HashMap<Node,HashSet<Node>
-        UnionFind unionFinder = new UnionFind(this.nodes);
+        UnionFind unionFinder = new UnionFind(this.getNodes());
 
-        PriorityQueue<Edge> prioEdgeQueue = new PriorityQueue<>(this.edges.size(), this.edgeComparator);
+        PriorityQueue<Edge> prioEdgeQueue = new PriorityQueue<>(this.getEdges().size(), this.edgeComparator);
         prioEdgeQueue.addAll(this.getEdges());
 
         for (Edge e : prioEdgeQueue) {
@@ -377,7 +382,7 @@ public class Graph {
                 e.getStart().addEdge(e);
                 e.getEnd().addEdge(e);
                 result.addEdge(e);
-                result.totalWeight +=e.getWeight();
+                result.addToTotalWeight(e.getWeight());
 
                 unionFinder.union(e.getStart(), e.getEnd());
             }

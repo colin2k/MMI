@@ -1,7 +1,9 @@
 /**
  * Created by colin on 07.04.2015.
  */
+
 import java.util.List;
+
 public class UnionFind {
     private Node[] nodes;
     private int[] rank;
@@ -11,9 +13,9 @@ public class UnionFind {
         count = NL.size();
         nodes = new Node[count];
         rank = new int[count];
-        for (Node n :NL) {
+        for (Node n : NL) {
             nodes[n.getIndex()] = n;
-            rank[n.getIndex()] = 0;
+            rank[n.getIndex()] = 1;
         }
     }
 
@@ -27,7 +29,7 @@ public class UnionFind {
 
     }
 
-    public Node[] getNodes(){
+    public Node[] getNodes() {
         return this.nodes;
     }
 
@@ -38,21 +40,18 @@ public class UnionFind {
 
         if (root2 == root1) return;
 
-        if (rank[root1.getIndex()] > rank[root2.getIndex()]) {
-            nodes[root2.getIndex()] = root1;
-        } else if (rank[root2.getIndex()] > rank[root1.getIndex()]) {
+        if (rank[root1.getIndex()] < rank[root2.getIndex()]) {
             nodes[root1.getIndex()] = root2;
+            rank[root2.getIndex()] += rank[root1.getIndex()];
         } else {
             nodes[root2.getIndex()] = root1;
-            rank[root1.getIndex()]++;
+            rank[root1.getIndex()] += rank[root2.getIndex()];
         }
+        count--;
     }
 
-    public boolean connected(Node  p, Node q) {
-        return find(p) == find(q);
+    public boolean connected(Node i, Node j) {
+        return find(i) == find(j);
     }
-
-
-
 
 }

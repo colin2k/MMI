@@ -19,9 +19,10 @@ public class Program {
 
 	public static void main(String[] args) {
 
-		double startTime=0;
-		double endTime=0;
-
+		double startPrimTime=0;
+		double endPrimTime=0;
+		double startKruskalTime=0;
+		double endKruskalTime=0;
 
 		try {
 			// reading file
@@ -29,16 +30,33 @@ public class Program {
 					"graphen/G_100_200.txt"));
 
 			Graph g = new Graph(in, EDGE_LIST_WEIGHT);
-			Node startNode = g.getNode(0);
+
+			Node startNode = g.getNode(1);
 			//System.out.println(startNode.getOutgoingEdges());
 
-			startTime = System.nanoTime();
-			Graph testGraph = g.kruskal();
-			endTime = System.nanoTime();
+			startPrimTime = System.nanoTime();
+			Graph primGraph = g.prim(startNode);
+			endPrimTime = System.nanoTime();
 
-			System.out.println("Nodes:"+testGraph.getNodes().size());
-			System.out.println("Edges:"+testGraph.getEdges().size());
-			System.out.println("Graph-Weight:\n"+testGraph.getTotalWeight());
+			double msPrimDuration = (endPrimTime-startPrimTime)/1000000; //in ms
+			double sPrimDuration = msPrimDuration/1000; //in s
+
+			System.out.println("\n\nPrim done in:");
+			System.out.println("Prim-Weight:"+primGraph.getTotalWeight());
+			System.out.println(String.valueOf(sPrimDuration) +  " s");
+
+
+			startKruskalTime = System.nanoTime();
+			Graph kruskalGraph = g.kruskal();
+			endKruskalTime = System.nanoTime();
+
+			double msKruskalDuration = (endKruskalTime-startKruskalTime)/1000000; //in ms
+			double sKruskalDuration = msKruskalDuration/1000; //in s
+
+			System.out.println("\n\nKruskal done in:");
+			System.out.println("Kruskal-Weight:"+kruskalGraph.getTotalWeight());
+			System.out.println(String.valueOf(sKruskalDuration) +  " s");
+
 
 
 			in.close();
@@ -50,16 +68,12 @@ public class Program {
 		} catch (ArrayIndexOutOfBoundsException e) {
 
 			System.out.println("Startknoten nicht gefunden");
+			System.out.println(e);
+
 		}
 
-		double msDuration = (endTime-startTime)/1000000; //in ms
-		double sDuration = msDuration/1000; //in s
-		double mDuration = sDuration/60; //in m
 
-		System.out.println("\n\ndone in:");
-		System.out.println(String.valueOf(msDuration)+ " ms");
-		System.out.println(String.valueOf(sDuration) +  " s");
-		System.out.println(String.valueOf(mDuration) +  " m");
+
 
 	}
 
