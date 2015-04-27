@@ -61,5 +61,7 @@ public class Edge implements Comparable<Edge> {
 	public int compare(Edge e){
 		return Double.compare(this.getWeight(), e.getWeight());
 	}
-
+	public Edge reverse(){
+		return new Edge(this.getEnd(),this.getStart(),this.getWeight());
+	}
 }

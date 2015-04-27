@@ -7,14 +7,13 @@
  * @Class Node
  */
 
-import java.util.List;
-import java.util.Vector;
+import java.util.*;
 
 public class Node {
 
 	private int index;
 	private boolean visited = false;
-	private List<Edge> edges;
+	private LinkedList<Edge> edges;
 
 	/**
 	 * Construct for Node
@@ -22,7 +21,7 @@ public class Node {
 	 * @param index
 	 */
 	public Node(int index) {
-		this.edges = new Vector<>();
+		this.edges = new LinkedList<>();
 		this.index = index;
 	}
 
@@ -89,4 +88,9 @@ public class Node {
 		return this.edges;
 	}
 
+	public void removeEdge(Edge edge){
+		this.edges.remove(edge);
+
+	}
 }
+

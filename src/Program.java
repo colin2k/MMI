@@ -27,42 +27,22 @@ public class Program {
 
 		try {
 
-			
 
 			// reading file
 			BufferedReader in = new BufferedReader(new FileReader(
-					"graphen/G_100_200.txt"));
+					"graphen/K_10.txt"));
 
 			Graph g = new Graph(in, EDGE_LIST_WEIGHT);
 
-			Node startNode = g.getNode(1);
-			//System.out.println(startNode.getOutgoingEdges());
+			Node startNode = g.getNode(0);
+			double start = System.nanoTime();
+			Graph tspGraph =  g.tspDoubleTreeTour(startNode);
+			double end = System.nanoTime();
 
+			System.out.println("\n\nTSP:");
+			System.out.println(tspGraph);
 
-			startPrimTime = System.nanoTime();
-			Graph primGraph = g.prim(startNode);
-			endPrimTime = System.nanoTime();
-
-			double msPrimDuration = (endPrimTime-startPrimTime)/1000000; //in ms
-			double sPrimDuration = msPrimDuration/1000; //in s
-
-			System.out.println("\n\nPrim done in: \t\t"+String.valueOf(sPrimDuration) +  " s");
-			System.out.println("Prim-Weight: \t\t"+primGraph.getTotalWeight());
-//			System.out.println(primGraph);
-
-			startKruskalTime = System.nanoTime();
-			Graph kruskalGraph = g.kruskal();
-			endKruskalTime = System.nanoTime();
-
-			double msKruskalDuration = (endKruskalTime-startKruskalTime)/1000000; //in ms
-			double sKruskalDuration = msKruskalDuration/1000; //in s
-
-			System.out.println("\n\nKruskal done in: \t"+String.valueOf(sKruskalDuration) +  " s");
-			System.out.println("Kruskal-Weight: \t"+kruskalGraph.getTotalWeight());
-			//System.out.println(kruskalGraph);
-
-
-
+			System.out.println("Time: "+((end-start)/1000000)+"s");
 			in.close();
 			
 			// Error Handling...
