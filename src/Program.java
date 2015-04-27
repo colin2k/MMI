@@ -30,19 +30,20 @@ public class Program {
 
 			// reading file
 			BufferedReader in = new BufferedReader(new FileReader(
-					"graphen/K_10.txt"));
+					"graphen/K_12.txt"));
 
 			Graph g = new Graph(in, EDGE_LIST_WEIGHT);
 
 			Node startNode = g.getNode(0);
 			double start = System.nanoTime();
-			Graph tspGraph =  g.tspDoubleTreeTour(startNode);
+			//Graph tspGraph =  g.tspDoubleTreeTour(startNode);
+			Graph tspGraph =  g.tspBruteForce();
 			double end = System.nanoTime();
 
 			System.out.println("\n\nTSP:");
 			System.out.println(tspGraph);
 
-			System.out.println("Time: "+((end-start)/1000000)+"s");
+			System.out.println("Time: "+((end-start)/1000000000)+"s");
 			in.close();
 			
 			// Error Handling...

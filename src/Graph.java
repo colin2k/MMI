@@ -441,7 +441,7 @@ public class Graph {
                 currentEdge = prioEdgeQueue.remove();
             }
         }
-        for(Edge e: currentEdge.getEnd().getEdges()){System.out.println(e);
+        for(Edge e: currentEdge.getEnd().getEdges()){
             if(e.getEnd() == startNode){
                 result.addNode(startNode);
                 result.addEdge(e);
@@ -486,6 +486,7 @@ public class Graph {
             result.addEdge(newEdge);
             lastNode = newNodeTo;
         }
+        result.addNode(lastNode);
         result.addNode(depth.getNode(startNode.getIndex()));
         double weight = 0;
         for(Edge e: this.getEdges()){
@@ -502,6 +503,79 @@ public class Graph {
         return result;
     }
 
+
+    private void getTspTour(Node startNode,Graph currentGraph,Double MaxWeight) {
+        PriorityQueue<Edge> startEdgeList = new PriorityQueue<>();
+        startEdgeList.addAll(startNode.getEdges());
+        Node currentStartNode = currentGraph.getNode(startNode.getIndex());
+        currentStartNode.visit();
+        Edge wayBack =null;
+        while(!startEdgeList.isEmpty()){
+            Edge currentEdge = startEdgeList.remove();
+
+            if(!currentGraph.getNode(currentEdge.getEnd().getIndex()).getVisited()){
+                Node currentEndNode = currentGraph.getNode(currentEdge.getEnd().getIndex());
+                currentStartNode = currentGraph.getNode(currentEdge.getStart().getIndex());
+                Edge newEdge = new Edge(currentStartNode,currentEndNode,currentEdge.getWeight());
+                currentGraph.addEdge(newEdge);
+                currentGraph.addToTotalWeight(newEdge.getWeight());
+                currentEndNode.visit();
+                boolean vAll = true;
+                for(Node n:currentGraph.getNodes()){
+                    if(!n.getVisited()) {
+                        vAll = false;
+                        break;
+                    }
+                }
+                if(vAll) {
+                    for (Edge e : this.getEdges()) {
+                        if (e.getEnd().getIndex() == currentEndNode.getIndex() && e.getStart().getIndex() == startNode.getIndex()) {
+                            wayBack = new Edge(currentGraph.getNode(e.getStart().getIndex()), currentGraph.getNode(e.getEnd().getIndex()), e.getWeight());
+                        }
+
+                    }
+                }
+                if(null != wayBack && (wayBack.getWeight()+currentGraph.getTotalWeight())<= MaxWeight){
+                    currentGraph.addEdge(wayBack);
+                    currentGraph.addToTotalWeight(wayBack.getWeight());
+                    return;
+                }
+                startEdgeList.clear();
+                startEdgeList.addAll(currentEdge.getEnd().getEdges());
+            }
+        }
+        return;
+    }
+    public Graph tspBruteForce(){
+        Graph result = new Graph();
+        Graph currentGraph = new Graph();
+        LinkedList<Node> StartNodeList = new LinkedList<>(this.getNodes());
+        Double bestWeight = Double.POSITIVE_INFINITY;
+        Node startNode = StartNodeList.poll();
+        Graph tspNN = this.tspNearestNeighbourTour(startNode);
+
+        for(Node n:this.getNodes()) {
+            Node newStartNode = new Node(n.getIndex());
+            currentGraph.addNode(newStartNode);
+        }
+
+        while(!StartNodeList.isEmpty()) {
+
+
+            if(tspNN.getTotalWeight()>currentGraph.getTotalWeight()){
+
+                this.getTspTour(StartNodeList.poll(), currentGraph,bestWeight);
+            }
+            else{
+
+                this.getTspTour(StartNodeList.poll(),currentGraph,bestWeight);
+            }
+        }
+
+
+        return currentGraph;
+    }
+
     private Graph removeUnusedEdges(){
         Graph result = new Graph();
         for(Node n :this.getNodes()){
@@ -515,7 +589,5 @@ public class Graph {
         }
         return result;
     }
-
-
 
 }
