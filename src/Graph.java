@@ -84,7 +84,7 @@ public class Graph {
             result += e + "\n";
 
         }
-        result += "\nWeight:"+this.getTotalWeight();
+        result += "\nWeight:" + this.getTotalWeight();
         return result;
     }
 
@@ -164,7 +164,7 @@ public class Graph {
                     Node nodeTo = this.nodes.get(Integer.parseInt(straBuf[1]));
 
                     Edge newEdge = new Edge(nodeFrom, nodeTo, Double.parseDouble(straBuf[2]));
-                    Edge newEdgeReverse = new Edge(nodeTo,nodeFrom, Double.parseDouble(straBuf[2]));
+                    Edge newEdgeReverse = new Edge(nodeTo, nodeFrom, Double.parseDouble(straBuf[2]));
 
                     nodeFrom.addEdge(newEdge);
                     nodeFrom.addEdge(newEdgeReverse);
@@ -191,8 +191,8 @@ public class Graph {
     }
 
     public Node getNode(int index) {
-        for(Node n: this.nodes){
-            if(n.getIndex() == index){
+        for (Node n : this.nodes) {
+            if (n.getIndex() == index) {
                 return n;
             }
         }
@@ -228,7 +228,6 @@ public class Graph {
                 result.addNode(currentNode);
 
 
-
                 graphCounter++;
                 // start recursion
                 this.recDepthSearch(currentNode, result);
@@ -243,7 +242,7 @@ public class Graph {
     // Recursive depth-first search
     private void recDepthSearch(Node start, Graph result) {
 
-        if(!start.getVisited()){
+        if (!start.getVisited()) {
             start.visit();
             result.addNode(start);
         }
@@ -262,7 +261,7 @@ public class Graph {
                 // visit Start Node
                 currentEdge.getStart().visit();
                 // create new Edge from start Node to current Edge start Node
-                result.addEdge(new Edge(start, currentEdge.getStart(),currentEdge.getWeight()));
+                result.addEdge(new Edge(start, currentEdge.getStart(), currentEdge.getWeight()));
 
                 //recursion call with - start node of current Edge, result graph
 
@@ -278,7 +277,7 @@ public class Graph {
                 currentEdge.getEnd().visit();
 
                 // create new Edge from start Node to current Edge start Node
-                result.addEdge(new Edge(start, currentEdge.getEnd(),currentEdge.getWeight()));
+                result.addEdge(new Edge(start, currentEdge.getEnd(), currentEdge.getWeight()));
 
 				/*
                  * recursion call with end node of current Edge and result graph
@@ -427,22 +426,21 @@ public class Graph {
         prioEdgeQueue.addAll(startNode.getEdges());
         Edge currentEdge = prioEdgeQueue.remove();
 
-        while(result.getNodes().size()< this.getNodes().size()) {
+        while (result.getNodes().size() < this.getNodes().size()) {
 
-            if(!currentEdge.getEnd().getVisited()){
+            if (!currentEdge.getEnd().getVisited()) {
                 result.addEdge(currentEdge);
                 result.addNode(currentEdge.getEnd());
                 result.addToTotalWeight(currentEdge.getWeight());
                 currentEdge.getEnd().visit();
                 prioEdgeQueue.clear();
                 prioEdgeQueue.addAll(currentEdge.getEnd().getEdges());
-            }
-            else{
+            } else {
                 currentEdge = prioEdgeQueue.remove();
             }
         }
-        for(Edge e: currentEdge.getEnd().getEdges()){
-            if(e.getEnd() == startNode){
+        for (Edge e : currentEdge.getEnd().getEdges()) {
+            if (e.getEnd() == startNode) {
                 result.addNode(startNode);
                 result.addEdge(e);
                 result.addToTotalWeight(e.getWeight());
@@ -455,8 +453,7 @@ public class Graph {
     }
 
 
-
-    public Graph tspDoubleTreeTour(Node startNode){
+    public Graph tspDoubleTreeTour(Node startNode) {
         // start with MST
         Graph result = new Graph();
         Graph mst = this.kruskal();
@@ -465,19 +462,19 @@ public class Graph {
 
         Graph depth = newmst.depthSearch(newmst.getNode(startNode.getIndex()));
         Node lastNode = startNode;
-        for(int i=0;result.getNodes().size() < depth.getNodes().size()-1;i++) {
+        for (int i = 0; result.getNodes().size() < depth.getNodes().size() - 1; i++) {
             Node newNodeFrom = new Node(depth.nodes.get(i).getIndex());
-            Node newNodeTo = new Node(depth.nodes.get(i+1).getIndex());
+            Node newNodeTo = new Node(depth.nodes.get(i + 1).getIndex());
             double weight = 0;
-            for(Edge e: this.getEdges()){
-                if((e.getStart().getIndex() == newNodeFrom.getIndex()
-                    && e.getEnd().getIndex() == newNodeTo.getIndex())
-                    || (e.getEnd().getIndex() == newNodeFrom.getIndex()
-                && e.getStart().getIndex() == newNodeTo.getIndex())){
+            for (Edge e : this.getEdges()) {
+                if ((e.getStart().getIndex() == newNodeFrom.getIndex()
+                        && e.getEnd().getIndex() == newNodeTo.getIndex())
+                        || (e.getEnd().getIndex() == newNodeFrom.getIndex()
+                        && e.getStart().getIndex() == newNodeTo.getIndex())) {
                     weight = e.getWeight();
                 }
             }
-            Edge newEdge = new Edge(newNodeFrom,newNodeTo,weight);
+            Edge newEdge = new Edge(newNodeFrom, newNodeTo, weight);
             newNodeFrom.visit();
             newNodeTo.visit();
             result.addNode(newNodeFrom);
@@ -489,100 +486,105 @@ public class Graph {
         result.addNode(lastNode);
         result.addNode(depth.getNode(startNode.getIndex()));
         double weight = 0;
-        for(Edge e: this.getEdges()){
-            if((e.getStart().getIndex() == startNode.getIndex()
+        for (Edge e : this.getEdges()) {
+            if ((e.getStart().getIndex() == startNode.getIndex()
                     && e.getEnd().getIndex() == lastNode.getIndex())
                     || (e.getEnd().getIndex() == startNode.getIndex()
-                    && e.getStart().getIndex() == lastNode.getIndex())){
+                    && e.getStart().getIndex() == lastNode.getIndex())) {
                 weight = e.getWeight();
             }
         }
-        Edge newEdge = new Edge(lastNode,result.getNode(startNode.getIndex()),weight);
+        Edge newEdge = new Edge(lastNode, result.getNode(startNode.getIndex()), weight);
         result.addEdge(newEdge);
         result.addToTotalWeight(weight);
         return result;
     }
 
 
-    private void getTspTour(Node startNode,Graph currentGraph,Double MaxWeight) {
+    private void getTspTour(Node startNode, Graph currentGraph, Double MaxWeight) {
         PriorityQueue<Edge> startEdgeList = new PriorityQueue<>();
         startEdgeList.addAll(startNode.getEdges());
         Node currentStartNode = currentGraph.getNode(startNode.getIndex());
         currentStartNode.visit();
-        Edge wayBack =null;
-        while(!startEdgeList.isEmpty()){
+        Edge wayBack = null;
+        while (!startEdgeList.isEmpty()) {
             Edge currentEdge = startEdgeList.remove();
 
-            if(!currentGraph.getNode(currentEdge.getEnd().getIndex()).getVisited()){
+            if (!currentGraph.getNode(currentEdge.getEnd().getIndex()).getVisited()) {
                 Node currentEndNode = currentGraph.getNode(currentEdge.getEnd().getIndex());
                 currentStartNode = currentGraph.getNode(currentEdge.getStart().getIndex());
-                Edge newEdge = new Edge(currentStartNode,currentEndNode,currentEdge.getWeight());
+                Edge newEdge = new Edge(currentStartNode, currentEndNode, currentEdge.getWeight());
                 currentGraph.addEdge(newEdge);
                 currentGraph.addToTotalWeight(newEdge.getWeight());
                 currentEndNode.visit();
                 boolean vAll = true;
-                for(Node n:currentGraph.getNodes()){
-                    if(!n.getVisited()) {
+                for (Node n : currentGraph.getNodes()) {
+                    if (!n.getVisited()) {
                         vAll = false;
                         break;
                     }
                 }
-                if(vAll) {
+                if (vAll) {
                     for (Edge e : this.getEdges()) {
                         if (e.getEnd().getIndex() == currentEndNode.getIndex() && e.getStart().getIndex() == startNode.getIndex()) {
                             wayBack = new Edge(currentGraph.getNode(e.getStart().getIndex()), currentGraph.getNode(e.getEnd().getIndex()), e.getWeight());
+                            currentGraph.addEdge(wayBack);
+                            currentGraph.addToTotalWeight(wayBack.getWeight());
+                            return;
                         }
 
                     }
                 }
-                if(null != wayBack && (wayBack.getWeight()+currentGraph.getTotalWeight())<= MaxWeight){
-                    currentGraph.addEdge(wayBack);
-                    currentGraph.addToTotalWeight(wayBack.getWeight());
-                    return;
-                }
+
                 startEdgeList.clear();
                 startEdgeList.addAll(currentEdge.getEnd().getEdges());
             }
         }
-        return;
+
     }
-    public Graph tspBruteForce(){
+
+    public Graph tspBruteForce() {
         Graph result = new Graph();
-        Graph currentGraph = new Graph();
+
         LinkedList<Node> StartNodeList = new LinkedList<>(this.getNodes());
         Double bestWeight = Double.POSITIVE_INFINITY;
-        Node startNode = StartNodeList.poll();
-        Graph tspNN = this.tspNearestNeighbourTour(startNode);
 
-        for(Node n:this.getNodes()) {
-            Node newStartNode = new Node(n.getIndex());
-            currentGraph.addNode(newStartNode);
+
+
+        while (!StartNodeList.isEmpty()) {
+            Graph currentGraph = new Graph();
+            for (Node n : this.getNodes()) {
+                Node newStartNode = new Node(n.getIndex());
+                currentGraph.addNode(newStartNode);
+            }
+
+            this.getTspTour(StartNodeList.poll(), currentGraph, bestWeight);
+            boolean vAll = true;
+            for(Node n : currentGraph.getNodes()){
+                if(!n.getVisited())
+                    vAll = false;
+            }
+
+            if (vAll && bestWeight > currentGraph.getTotalWeight()) {
+
+                result = currentGraph;
+                bestWeight = currentGraph.getTotalWeight();
+
+            }
+
         }
 
-        while(!StartNodeList.isEmpty()) {
 
-
-            if(tspNN.getTotalWeight()>currentGraph.getTotalWeight()){
-
-                this.getTspTour(StartNodeList.poll(), currentGraph,bestWeight);
-            }
-            else{
-
-                this.getTspTour(StartNodeList.poll(),currentGraph,bestWeight);
-            }
-        }
-
-
-        return currentGraph;
+        return result;
     }
 
-    private Graph removeUnusedEdges(){
+    private Graph removeUnusedEdges() {
         Graph result = new Graph();
-        for(Node n :this.getNodes()){
+        for (Node n : this.getNodes()) {
             result.addNode(new Node(n.getIndex()));
         }
-        for(Edge e: this.getEdges()) {
-            Edge newEdge = new Edge(result.getNode(e.getStart().getIndex()),result.getNode(e.getEnd().getIndex()),e.getWeight());
+        for (Edge e : this.getEdges()) {
+            Edge newEdge = new Edge(result.getNode(e.getStart().getIndex()), result.getNode(e.getEnd().getIndex()), e.getWeight());
             result.addEdge(newEdge);
             result.getNode(e.getStart().getIndex()).addEdge(newEdge);
             result.getNode(e.getEnd().getIndex()).addEdge(newEdge);

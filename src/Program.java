@@ -30,7 +30,7 @@ public class Program {
 
 			// reading file
 			BufferedReader in = new BufferedReader(new FileReader(
-					"graphen/K_12.txt"));
+					"graphen/K_10.txt"));
 
 			Graph g = new Graph(in, EDGE_LIST_WEIGHT);
 
