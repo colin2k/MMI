@@ -10,6 +10,7 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.PriorityQueue;
 
 public class Program {
@@ -30,14 +31,14 @@ public class Program {
 
 			// reading file
 			BufferedReader in = new BufferedReader(new FileReader(
-					"graphen/K_10.txt"));
+					"graphen/K_12.txt"));
 
 			Graph g = new Graph(in, EDGE_LIST_WEIGHT);
 
 			Node startNode = g.getNode(0);
 			double start = System.nanoTime();
-			//Graph tspGraph =  g.tspDoubleTreeTour(startNode);
-			Graph tspGraph =  g.tspBruteForce();
+			LinkedList<Graph> tspGraph =  g.tspBruteForce(startNode);
+
 			double end = System.nanoTime();
 
 			System.out.println("\n\nTSP:");

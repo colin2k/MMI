@@ -6,6 +6,8 @@
  * @Class Graph
  */
 
+import sun.reflect.ReflectionFactory;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.*;
@@ -506,7 +508,8 @@ public class Graph {
         startEdgeList.addAll(startNode.getEdges());
         Node currentStartNode = currentGraph.getNode(startNode.getIndex());
         currentStartNode.visit();
-        Edge wayBack = null;
+        Edge wayBack;
+        boolean vAll;
         while (!startEdgeList.isEmpty()) {
             Edge currentEdge = startEdgeList.remove();
 
@@ -517,7 +520,7 @@ public class Graph {
                 currentGraph.addEdge(newEdge);
                 currentGraph.addToTotalWeight(newEdge.getWeight());
                 currentEndNode.visit();
-                boolean vAll = true;
+                vAll = true;
                 for (Node n : currentGraph.getNodes()) {
                     if (!n.getVisited()) {
                         vAll = false;
@@ -532,7 +535,6 @@ public class Graph {
                             currentGraph.addToTotalWeight(wayBack.getWeight());
                             return;
                         }
-
                     }
                 }
 
@@ -543,39 +545,65 @@ public class Graph {
 
     }
 
-    public Graph tspBruteForce() {
-        Graph result = new Graph();
-
-        LinkedList<Node> StartNodeList = new LinkedList<>(this.getNodes());
-        Double bestWeight = Double.POSITIVE_INFINITY;
 
 
+    private void tspRecBruteForce(Node startNode,LinkedList<Graph> resultGraphs, Graph toTraverse, Graph currentGraph){
 
-        while (!StartNodeList.isEmpty()) {
-            Graph currentGraph = new Graph();
-            for (Node n : this.getNodes()) {
-                Node newStartNode = new Node(n.getIndex());
-                currentGraph.addNode(newStartNode);
+        if(toTraverse.nodes.size() == currentGraph.nodes.size())
+        {
+            Edge newEdge = this.connect(currentGraph.nodes.get(0),startNode);
+            currentGraph.addEdge(newEdge);
+            currentGraph.addToTotalWeight(newEdge.getWeight());
+            if(toTraverse.totalWeight>currentGraph.getTotalWeight()) {
+
+                toTraverse.totalWeight = currentGraph.getTotalWeight();
+                resultGraphs.add(currentGraph);
             }
 
-            this.getTspTour(StartNodeList.poll(), currentGraph, bestWeight);
-            boolean vAll = true;
-            for(Node n : currentGraph.getNodes()){
-                if(!n.getVisited())
-                    vAll = false;
+        } else {
+            for (Node n : toTraverse.getNodes()) {
+                if (!currentGraph.getNodes().contains(n)) {
+
+                    Graph newGraph = new Graph();
+                    for(Node no: currentGraph.getNodes()){
+                        newGraph.addNode(no);
+                    }
+                    for(Edge e: currentGraph.getEdges()){
+                        newGraph.addEdge(e);
+                        newGraph.addToTotalWeight(e.getWeight());
+                    }
+                    Edge tobeAdded = this.connect(startNode, n);
+                    newGraph.addEdge(tobeAdded);
+                    newGraph.addToTotalWeight(tobeAdded.getWeight());
+                    newGraph.addNode(n);
+                    //HIER NOCH ZUGEHÖRIGE KANTE ADDEN
+                    if(toTraverse.totalWeight > newGraph.getTotalWeight() ) {
+                        tspRecBruteForce(n, resultGraphs, toTraverse, newGraph);
+                    }
+                }
             }
-
-            if (vAll && bestWeight > currentGraph.getTotalWeight()) {
-
-                result = currentGraph;
-                bestWeight = currentGraph.getTotalWeight();
-
-            }
-
         }
+    }
 
+    private Edge connect(Node i,Node j){
+        for(Edge e: this.getEdges()){
+            if((e.getStart() == i && e.getEnd() == j) ||
+                    (e.getStart() == j && e.getEnd() == i)){
+                return e;
+            }
+        }
+        return null;
+    }
+    public LinkedList<Graph> tspBruteForce(Node startNode) {
 
-        return result;
+        Graph toTraverse = this.clone();
+        toTraverse.totalWeight = Double.MAX_VALUE;
+        LinkedList<Graph> resultGraphs = new LinkedList<>();
+        Graph currentGraph = new Graph();
+        currentGraph.addNode(startNode);
+        tspRecBruteForce(startNode,resultGraphs, toTraverse, currentGraph);
+        return resultGraphs;
+
     }
 
     private Graph removeUnusedEdges() {
