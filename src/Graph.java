@@ -6,8 +6,6 @@
  * @Class Graph
  */
 
-import sun.reflect.ReflectionFactory;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.*;
@@ -24,29 +22,38 @@ public class Graph {
 
     private Double totalWeight;
 
-    private Comparator<Edge> edgeComparator = new Comparator<Edge>() {
-        @Override
-        public int compare(Edge e1, Edge e2) {
-            return Double.compare(e1.getWeight(), e2.getWeight());
-        }
-    };
-
     /**
      * empty construct - initialize node list - initialize edge list
      */
     public Graph() {
         this.nodes = new LinkedList<>();
         this.edges = new LinkedList<>();
-        this.totalWeight = Double.valueOf(0);
+        this.totalWeight = 0.0;
     }
 
+    /**
+     * Initialize Graph with node and edge List
+     *
+     * @param n List<Node>
+     * @param e List<Node>
+     */
     public Graph(List<Node> n, List<Edge> e) {
         this.nodes = n;
         this.edges = e;
 
     }
 
+    /**
+     * Clone Graph object
+     *
+     * @return Graph
+     */
     public Graph clone() {
+        try {
+            super.clone();
+        } catch (Exception e) {
+            //System.out.println("Cloning not supported by "+this.getClass());
+        }
         return new Graph(this.getNodes(), this.getEdges());
     }
 
@@ -57,7 +64,7 @@ public class Graph {
      * - read file into graph
      *
      * @param source   BufferedReader
-     * @param fileType int (AD_MATRIX | EDGE_LIST)
+     * @param fileType int (AD_MATRIX | EDGE_LIST | EDGE_LIST_WEIGHT)
      */
     public Graph(BufferedReader source, int fileType) {
         this.nodes = new Vector<>();
@@ -66,40 +73,93 @@ public class Graph {
         this.initFromSource(source, fileType);
     }
 
-
+    /**
+     * get Current Graph weight
+     *
+     * @return Double weight
+     */
     public Double getTotalWeight() {
         return this.totalWeight;
     }
 
-    private void addToTotalWeight(Double weight) {
-        this.totalWeight += weight;
+    /**
+     * Set current Graph weight
+     *
+     * @param weight Double
+     */
+    private void setTotalWeight(Double weight) {
+        this.totalWeight = weight;
     }
 
+    /**
+     * add Weight to current Graph weight
+     *
+     * @param weight Double
+     */
+    private void addToTotalWeight(Double weight) {
+        if (!(weight == null)) {
+            this.totalWeight += weight;
+        }
+    }
+
+    /**
+     * Connecting to Nodes with matching edge or new Edge
+     *
+     * @param i Node
+     * @param j Node
+     * @return Edge
+     */
+    protected Edge connect(Node i, Node j) {
+        for (Edge e : this.getEdges()) {
+            if ((e.getStart() == i && e.getEnd() == j) ||
+                    (e.getStart() == j && e.getEnd() == i)) {
+                return e;
+            }
+        }
+        return new Edge(i, j);
+    }
+
+    /**
+     * Graph to String
+     *
+     * @return String
+     */
     public String toString() {
         String result = "Nodes: [";
         for (Node n : this.nodes) {
             result += n;
-
         }
         result += "]\nEdges:\n";
         for (Edge e : this.edges) {
             result += e + "\n";
-
         }
         result += "\nWeight:" + this.getTotalWeight();
         return result;
     }
 
+    /**
+     * set all Nodes unvisited
+     */
     private void unVisitNodes() {
         for (Node n : this.nodes) {
             n.unvisit();
         }
     }
 
+    /**
+     * get List of Edges
+     *
+     * @return List<Edge>
+     */
     public List<Edge> getEdges() {
         return this.edges;
     }
 
+    /**
+     * get List of Nodes
+     *
+     * @return List<Node>
+     */
     public List<Node> getNodes() {
         return this.nodes;
     }
@@ -187,11 +247,21 @@ public class Graph {
     }
 
 
-    // adding a Node to Graph
+    /**
+     * add Node to Graph
+     *
+     * @param n Node
+     */
     private void addNode(Node n) {
         this.nodes.add(n);
     }
 
+    /**
+     * get a Node from Graph by Index
+     *
+     * @param index Integer
+     * @return Node
+     */
     public Node getNode(int index) {
         for (Node n : this.nodes) {
             if (n.getIndex() == index) {
@@ -201,12 +271,22 @@ public class Graph {
         return this.nodes.get(index);
     }
 
-    // adding an Edge to Graph
+    /**
+     * add Edge to Graph
+     *
+     * @param e Edge
+     */
     private void addEdge(Edge e) {
         this.edges.add(e);
     }
 
-    // depth-first search
+    /**
+     * do Depthfirst Search on current Graph
+     * - Recursion start
+     *
+     * @param start Node
+     * @return Graph
+     */
     public Graph depthSearch(Node start) {
 
         // Initialize result Graph and visitedNodes List
@@ -241,7 +321,14 @@ public class Graph {
         return result;
     }
 
-    // Recursive depth-first search
+
+    /**
+     * Depthfirst search on current Graph
+     * - Recurstion
+     *
+     * @param start  Node
+     * @param result Graph
+     */
     private void recDepthSearch(Node start, Graph result) {
 
         if (!start.getVisited()) {
@@ -289,7 +376,12 @@ public class Graph {
         }
     }
 
-    // breadth-first search
+    /**
+     * Breadth first search on current Graph
+     *
+     * @param start Node
+     * @return Graph
+     */
     public Graph breadthSearch(Node start) {
         // Initialize result Graph and llNodes LinkedList of Nodes as Stack
         Graph result = new Graph();
@@ -337,7 +429,12 @@ public class Graph {
     }
 
 
-    // Minimal Spanning tree (Prim-Algoithmus)
+    /**
+     * Minimal Spanning tree (Prim-Algorithm)
+     *
+     * @param start Node
+     * @return Graph
+     */
     public Graph prim(Node start) {
 
         this.unVisitNodes();
@@ -378,6 +475,11 @@ public class Graph {
         return result;
     }
 
+    /**
+     * Minimal spanning tree Kruskal-Algorithm
+     *
+     * @return Graph
+     */
     public Graph kruskal() {
 
         this.unVisitNodes();
@@ -418,6 +520,13 @@ public class Graph {
         return result;
     }
 
+    /**
+     * Solving Traveling Sales Man Problem
+     * - NearestNeighbour Algorithm
+     *
+     * @param startNode Node
+     * @return Graph
+     */
     public Graph tspNearestNeighbourTour(Node startNode) {
         Graph result = new Graph();
         this.unVisitNodes();
@@ -455,6 +564,13 @@ public class Graph {
     }
 
 
+    /**
+     * Solving Traveling Sales Man Problem
+     * - Double Tree Algorithm
+     *
+     * @param startNode Node
+     * @return Graph
+     */
     public Graph tspDoubleTreeTour(Node startNode) {
         // start with MST
         Graph result = new Graph();
@@ -502,82 +618,108 @@ public class Graph {
         return result;
     }
 
+    /**
+     * Solving Traveling Sales Man Problem
+     * - by trying all Tours (Brute Force Algorithm)
+     * <p/>
+     * - including Branch and Bound
+     *
+     * @param startNode Node
+     * @return LinkedList<Graph>
+     */
+    public LinkedList<Graph> tspBruteForce(Node startNode) {
 
-    private void getTspTour(Node startNode, Graph currentGraph, Double MaxWeight) {
-        PriorityQueue<Edge> startEdgeList = new PriorityQueue<>();
-        startEdgeList.addAll(startNode.getEdges());
-        Node currentStartNode = currentGraph.getNode(startNode.getIndex());
-        currentStartNode.visit();
-        Edge wayBack;
-        boolean vAll;
-        while (!startEdgeList.isEmpty()) {
-            Edge currentEdge = startEdgeList.remove();
+        /**
+         * get Copy of current Graph
+         */
+        Graph toTraverse = this.clone();
+        /**
+         * Bound init to Double MaxValue
+         */
+        toTraverse.totalWeight = Double.MAX_VALUE;
+        /**
+         * initialize LinkList of Graphs to hold resultGraphs
+         */
+        LinkedList<Graph> resultGraphs = new LinkedList<>();
 
-            if (!currentGraph.getNode(currentEdge.getEnd().getIndex()).getVisited()) {
-                Node currentEndNode = currentGraph.getNode(currentEdge.getEnd().getIndex());
-                currentStartNode = currentGraph.getNode(currentEdge.getStart().getIndex());
-                Edge newEdge = new Edge(currentStartNode, currentEndNode, currentEdge.getWeight());
-                currentGraph.addEdge(newEdge);
-                currentGraph.addToTotalWeight(newEdge.getWeight());
-                currentEndNode.visit();
-                vAll = true;
-                for (Node n : currentGraph.getNodes()) {
-                    if (!n.getVisited()) {
-                        vAll = false;
-                        break;
-                    }
-                }
-                if (vAll) {
-                    for (Edge e : this.getEdges()) {
-                        if (e.getEnd().getIndex() == currentEndNode.getIndex() && e.getStart().getIndex() == startNode.getIndex()) {
-                            wayBack = new Edge(currentGraph.getNode(e.getStart().getIndex()), currentGraph.getNode(e.getEnd().getIndex()), e.getWeight());
-                            currentGraph.addEdge(wayBack);
-                            currentGraph.addToTotalWeight(wayBack.getWeight());
-                            return;
-                        }
-                    }
-                }
-
-                startEdgeList.clear();
-                startEdgeList.addAll(currentEdge.getEnd().getEdges());
-            }
-        }
+        /**
+         * initialize Graph with starting node to start recursion
+         */
+        Graph currentGraph = new Graph();
+        currentGraph.addNode(startNode);
+        /**
+         * start recursion
+         */
+        tspRecBruteForce(startNode, resultGraphs, toTraverse, currentGraph);
+        return resultGraphs;
 
     }
 
+    /**
+     * Solving Traveling Sales Man Problem
+     * - by trying all Tours (Brute Force Algorithm)
+     * <p/>
+     * - including Branch and Bound
+     *
+     * @param startNode    Node
+     * @param resultGraphs LinkedList
+     * @param toTraverse   Graph
+     * @param currentTour  Graph
+     */
+    private void tspRecBruteForce(Node startNode, LinkedList<Graph> resultGraphs, Graph toTraverse, Graph currentTour) {
 
-
-    private void tspRecBruteForce(Node startNode,LinkedList<Graph> resultGraphs, Graph toTraverse, Graph currentGraph){
-
-        if(toTraverse.nodes.size() == currentGraph.nodes.size())
-        {
-            Edge newEdge = this.connect(currentGraph.nodes.get(0),startNode);
-            currentGraph.addEdge(newEdge);
-            currentGraph.addToTotalWeight(newEdge.getWeight());
-            if(toTraverse.totalWeight>currentGraph.getTotalWeight()) {
-
-                toTraverse.totalWeight = currentGraph.getTotalWeight();
-                resultGraphs.add(currentGraph);
+        /**
+         * if currentTour contains all nodes
+         */
+        if (toTraverse.nodes.size() == currentTour.nodes.size()) {
+            /**
+             * add the way back to start Node to the tour
+             */
+            Edge newEdge = this.connect(currentTour.nodes.get(0), startNode);
+            currentTour.addEdge(newEdge);
+            currentTour.addToTotalWeight(newEdge.getWeight());
+            /**
+             * Branch and Bound
+             * - set new Bound
+             */
+            if (toTraverse.totalWeight > currentTour.getTotalWeight()) {
+                toTraverse.totalWeight = currentTour.getTotalWeight();
+                resultGraphs.add(currentTour);
             }
 
         } else {
+            /**
+             * if there are still Nodes to add to the tour
+             */
             for (Node n : toTraverse.getNodes()) {
-                if (!currentGraph.getNodes().contains(n)) {
-
+                if (!currentTour.getNodes().contains(n)) {
+                    /**
+                     * create new Graph and add all nodes and edges from current Graph
+                     */
                     Graph newGraph = new Graph();
-                    for(Node no: currentGraph.getNodes()){
+                    for (Node no : currentTour.getNodes()) {
                         newGraph.addNode(no);
                     }
-                    for(Edge e: currentGraph.getEdges()){
+                    for (Edge e : currentTour.getEdges()) {
                         newGraph.addEdge(e);
                         newGraph.addToTotalWeight(e.getWeight());
                     }
+                    /**
+                     * get connecting Edge from original Graph
+                     * and add it to new Graph
+                     */
                     Edge tobeAdded = this.connect(startNode, n);
                     newGraph.addEdge(tobeAdded);
                     newGraph.addToTotalWeight(tobeAdded.getWeight());
                     newGraph.addNode(n);
-                    //HIER NOCH ZUGEHÖRIGE KANTE ADDEN
-                    if(toTraverse.totalWeight > newGraph.getTotalWeight() ) {
+
+                    /**
+                     * if Graph weight > current Bound
+                     *  do recursion
+                     * else
+                     *  break
+                     */
+                    if (toTraverse.totalWeight > newGraph.getTotalWeight()) {
                         tspRecBruteForce(n, resultGraphs, toTraverse, newGraph);
                     }
                 }
@@ -585,26 +727,103 @@ public class Graph {
         }
     }
 
-    private Edge connect(Node i,Node j){
-        for(Edge e: this.getEdges()){
-            if((e.getStart() == i && e.getEnd() == j) ||
-                    (e.getStart() == j && e.getEnd() == i)){
-                return e;
+
+    public Graph dijkstra(Node startNode, Node endNode) {
+
+        this.unVisitNodes();
+
+        /**
+         * initialize
+         */
+        Graph result = new Graph();
+        Edge currentEdge;
+
+        PriorityQueue<Edge> prioEdgeQueue = new PriorityQueue<>();
+        prioEdgeQueue.addAll(startNode.getEdges());
+        /**
+         * HashMap of shortest Paths to all Nodes
+         */
+        HashMap<Node, Graph> hmNodeGraph = new HashMap<>();
+
+        /**
+         * initialize HashMap with new Graphs for all Nodes.
+         * - Startnode Graph weight = 0.0
+         * - All others Double.POSITIVE_INFINITY
+         */
+        for (Node n : this.getNodes()) {
+            Graph tmpGraph = new Graph();
+            tmpGraph.addNode(startNode);
+            if (n == startNode) {
+                hmNodeGraph.put(n, tmpGraph);
+            } else {
+                tmpGraph.setTotalWeight(Double.POSITIVE_INFINITY);
+                hmNodeGraph.put(n, tmpGraph);
             }
         }
-        return null;
-    }
-    public LinkedList<Graph> tspBruteForce(Node startNode) {
 
-        Graph toTraverse = this.clone();
-        toTraverse.totalWeight = Double.MAX_VALUE;
-        LinkedList<Graph> resultGraphs = new LinkedList<>();
-        Graph currentGraph = new Graph();
-        currentGraph.addNode(startNode);
-        tspRecBruteForce(startNode,resultGraphs, toTraverse, currentGraph);
-        return resultGraphs;
+        startNode.visit();
 
+        /**
+         * Take Edges out of Prio Queue untill it's empty
+         */
+        while (!prioEdgeQueue.isEmpty()) {
+            currentEdge = prioEdgeQueue.remove();
+
+            if (!currentEdge.getEnd().getVisited()) {
+                /**
+                 * currentEndGraph - Graph from HashMap for endNode of current Edge
+                 * currentStartGraph - Graph from HashMap for startNode of current Edge
+                 * connectingEdge - Edge from original Graph with correct weight
+                 */
+                Graph currentEndGraph = hmNodeGraph.get(currentEdge.getEnd());
+                Graph currentStartGraph = hmNodeGraph.get(currentEdge.getStart());
+                Edge connectingEdge = this.connect(currentEdge.getStart(), currentEdge.getEnd());
+
+
+                if (currentEndGraph.getTotalWeight() > currentStartGraph.getTotalWeight() + currentEdge.getWeight()) {
+                    /**
+                     * Reset Graph weight if INFINT to add weight to it
+                     */
+                    if (currentEndGraph.getTotalWeight() == Double.POSITIVE_INFINITY) {
+                        currentEndGraph.setTotalWeight(0.0);
+                    }
+                    /**
+                     * put Nodes and Edges from StartGraph into Endgraph
+                     */
+                    for (Edge ed : currentStartGraph.getEdges()) {
+                        currentEndGraph.addEdge(ed);
+                        currentEndGraph.addToTotalWeight(ed.getWeight());
+                    }
+                    for (Node no : currentStartGraph.getNodes()) {
+                        if (!currentEndGraph.getNodes().contains(no)) {
+                            currentEndGraph.addNode(no);
+                        }
+                    }
+
+                    /**
+                     * Add the connecting Edge to the endNodeGraph
+                     */
+                    currentEndGraph.addToTotalWeight(connectingEdge.getWeight());
+
+                    currentEndGraph.addNode(currentEdge.getEnd());
+                    currentEndGraph.addEdge(connectingEdge);
+                    currentEdge.getEnd().visit();
+                    /**
+                     * add all Edges from endnode to priority queue + the way travled already
+                     */
+                    for (Edge enqueEdge : currentEdge.getEnd().getEdges()) {
+                        if (!enqueEdge.getEnd().getVisited()) {
+                            prioEdgeQueue.add(new Edge(enqueEdge.getStart(), enqueEdge.getEnd(), enqueEdge.getWeight() + currentStartGraph.getTotalWeight()));
+                        }
+                    }
+                }
+            }
+
+        }
+
+        return hmNodeGraph.get(endNode);
     }
+
 
     private Graph removeUnusedEdges() {
         Graph result = new Graph();
@@ -617,7 +836,9 @@ public class Graph {
             result.getNode(e.getStart().getIndex()).addEdge(newEdge);
             result.getNode(e.getEnd().getIndex()).addEdge(newEdge);
         }
+
         return result;
     }
+
 
 }
