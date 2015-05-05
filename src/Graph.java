@@ -621,13 +621,14 @@ public class Graph {
     /**
      * Solving Traveling Sales Man Problem
      * - by trying all Tours (Brute Force Algorithm)
-     * <p/>
+     * <p>
      * - including Branch and Bound
      *
      * @param startNode Node
+     * @param bnb       boolean
      * @return LinkedList<Graph>
      */
-    public LinkedList<Graph> tspBruteForce(Node startNode) {
+    public LinkedList<Graph> tspBruteForce(Node startNode, boolean bnb) {
 
         /**
          * get Copy of current Graph
@@ -650,7 +651,7 @@ public class Graph {
         /**
          * start recursion
          */
-        tspRecBruteForce(startNode, resultGraphs, toTraverse, currentGraph);
+        tspRecBruteForce(startNode, resultGraphs, toTraverse, currentGraph, bnb);
         return resultGraphs;
 
     }
@@ -658,15 +659,16 @@ public class Graph {
     /**
      * Solving Traveling Sales Man Problem
      * - by trying all Tours (Brute Force Algorithm)
-     * <p/>
+     * <p>
      * - including Branch and Bound
      *
      * @param startNode    Node
      * @param resultGraphs LinkedList
      * @param toTraverse   Graph
      * @param currentTour  Graph
+     * @param bnb          boolean
      */
-    private void tspRecBruteForce(Node startNode, LinkedList<Graph> resultGraphs, Graph toTraverse, Graph currentTour) {
+    private void tspRecBruteForce(Node startNode, LinkedList<Graph> resultGraphs, Graph toTraverse, Graph currentTour, boolean bnb) {
 
         /**
          * if currentTour contains all nodes
@@ -682,8 +684,12 @@ public class Graph {
              * Branch and Bound
              * - set new Bound
              */
-            if (toTraverse.totalWeight > currentTour.getTotalWeight()) {
-                toTraverse.totalWeight = currentTour.getTotalWeight();
+            if (bnb) {
+                if (toTraverse.totalWeight > currentTour.getTotalWeight()) {
+                    toTraverse.totalWeight = currentTour.getTotalWeight();
+                    resultGraphs.add(currentTour);
+                }
+            } else {
                 resultGraphs.add(currentTour);
             }
 
@@ -719,9 +725,14 @@ public class Graph {
                      * else
                      *  break
                      */
-                    if (toTraverse.totalWeight > newGraph.getTotalWeight()) {
-                        tspRecBruteForce(n, resultGraphs, toTraverse, newGraph);
+                    if (bnb) {
+                        if (toTraverse.totalWeight > newGraph.getTotalWeight()) {
+                            tspRecBruteForce(n, resultGraphs, toTraverse, newGraph, true);
+                        }
+                    } else {
+                        tspRecBruteForce(n, resultGraphs, toTraverse, newGraph, false);
                     }
+
                 }
             }
         }
@@ -735,7 +746,6 @@ public class Graph {
         /**
          * initialize
          */
-        Graph result = new Graph();
         Edge currentEdge;
 
         PriorityQueue<Edge> prioEdgeQueue = new PriorityQueue<>();
