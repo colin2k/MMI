@@ -22,6 +22,16 @@ public class Graph {
 
     private Double totalWeight;
 
+    public boolean isDirected() {
+        return directed;
+    }
+
+    public void setDirected(boolean directed) {
+        this.directed = directed;
+    }
+
+    private boolean directed= false;
+
     /**
      * empty construct - initialize node list - initialize edge list
      */
@@ -29,6 +39,7 @@ public class Graph {
         this.nodes = new LinkedList<>();
         this.edges = new LinkedList<>();
         this.totalWeight = 0.0;
+
     }
 
     /**
@@ -40,6 +51,7 @@ public class Graph {
     public Graph(List<Node> n, List<Edge> e) {
         this.nodes = n;
         this.edges = e;
+
 
     }
 
@@ -66,9 +78,10 @@ public class Graph {
      * @param source   BufferedReader
      * @param fileType int (AD_MATRIX | EDGE_LIST | EDGE_LIST_WEIGHT)
      */
-    public Graph(BufferedReader source, int fileType) {
+    public Graph(BufferedReader source, int fileType,boolean directed) {
         this.nodes = new Vector<>();
         this.edges = new Vector<>();
+        this.directed = directed;
 
         this.initFromSource(source, fileType);
     }
@@ -226,15 +239,17 @@ public class Graph {
                     Node nodeTo = this.nodes.get(Integer.parseInt(straBuf[1]));
 
                     Edge newEdge = new Edge(nodeFrom, nodeTo, Double.parseDouble(straBuf[2]));
-                    Edge newEdgeReverse = new Edge(nodeTo, nodeFrom, Double.parseDouble(straBuf[2]));
+                    if(!this.directed){
+                        Edge newEdgeReverse = new Edge(nodeTo, nodeFrom, Double.parseDouble(straBuf[2]));
+                        nodeFrom.addEdge(newEdgeReverse);
+                        nodeTo.addEdge(newEdgeReverse);
+                        this.addEdge(newEdgeReverse);
+                    }
 
                     nodeFrom.addEdge(newEdge);
-                    nodeFrom.addEdge(newEdgeReverse);
                     nodeTo.addEdge(newEdge);
-                    nodeTo.addEdge(newEdgeReverse);
 
                     this.addEdge(newEdge);
-                    this.addEdge(newEdgeReverse);
 
                 } else {
                     System.out.println("Fehler: Falscher Dateityp");
