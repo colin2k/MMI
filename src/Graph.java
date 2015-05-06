@@ -8,6 +8,7 @@
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.*;
 
 
@@ -753,18 +754,59 @@ public class Graph {
         }
     }
 
+    public Graph newDijkstra(Node startNode,Node endNode){
+        Graph result = new Graph();
+        ArrayList<Double> distance = new ArrayList<>();
+        ArrayList<Integer> prev = new ArrayList<>();
+        PriorityQueue<Node> Q = new PriorityQueue<>();
+        this.unVisitNodes();
+        for(Node n: this.getNodes()){
+            distance.add(n.getIndex(),Double.POSITIVE_INFINITY);
+            prev.add(n.getIndex(),null);
+        }
 
+        distance.add(startNode.getIndex(),0.0);
+        Q.add(startNode);
+        while(!Q.isEmpty()){
+            Node currentNode = Q.remove();
+            if(!currentNode.getVisited()) {
+                currentNode.visit();
+                for (Edge e : currentNode.getEdges()) {
+                    Double alternateWeight = distance.get(e.getStart().getIndex())+e.getWeight();
+                    if (alternateWeight < distance.get(e.getEnd().getIndex())) {
+                        distance.set(e.getEnd().getIndex(),alternateWeight);
+                        prev.set(e.getEnd().getIndex(),e.getStart().getIndex());
+                    }
+                    e.getEnd().setWeight(e.getWeight());
+                    Q.add(e.getEnd());
+                }
+            }
+        }
+
+        for(int i = 0;i<this.getNodes().size()-1;++i){
+            result.addNode(this.getNode(i));
+
+            if(i == endNode.getIndex()){
+                result.addEdge(new Edge(this.getNode(prev.get(i)), this.getNode(i), distance.get(i)));
+                return result;
+            }
+        }
+        return result;
+
+    }
     public Graph dijkstra(Node startNode, Node endNode) {
 
         this.unVisitNodes();
-
+        Graph workingGraph = this.removeUnusedEdges();
+        Node newStartnode = workingGraph.getNode(startNode.getIndex());
         /**
          * initialize
          */
         Edge currentEdge;
 
+
         PriorityQueue<Edge> prioEdgeQueue = new PriorityQueue<>();
-        prioEdgeQueue.addAll(startNode.getEdges());
+        prioEdgeQueue.addAll(newStartnode.getEdges());
         /**
          * HashMap of shortest Paths to all Nodes
          */
@@ -772,21 +814,20 @@ public class Graph {
 
         /**
          * initialize HashMap with new Graphs for all Nodes.
-         * - Startnode Graph weight = 0.0
-         * - All others Double.POSITIVE_INFINITY
+         * - All others then startNode Double.POSITIVE_INFINITY
          */
-        for (Node n : this.getNodes()) {
+        for (Node n : workingGraph.getNodes()) {
             Graph tmpGraph = new Graph();
-            tmpGraph.addNode(startNode);
-            if (n == startNode) {
+            tmpGraph.setDirected(workingGraph.directed);
+            if (n == newStartnode) {
                 hmNodeGraph.put(n, tmpGraph);
             } else {
                 tmpGraph.setTotalWeight(Double.POSITIVE_INFINITY);
-                hmNodeGraph.put(n, tmpGraph);
             }
+            hmNodeGraph.put(n, tmpGraph);
         }
 
-        startNode.visit();
+        newStartnode.visit();
 
         /**
          * Take Edges out of Prio Queue untill it's empty
@@ -802,28 +843,16 @@ public class Graph {
                  */
                 Graph currentEndGraph = hmNodeGraph.get(currentEdge.getEnd());
                 Graph currentStartGraph = hmNodeGraph.get(currentEdge.getStart());
-                Edge connectingEdge = this.connect(currentEdge.getStart(), currentEdge.getEnd());
+                Edge connectingEdge = workingGraph.connect(currentEdge.getStart(), currentEdge.getEnd());
 
 
                 if (currentEndGraph.getTotalWeight() > currentStartGraph.getTotalWeight() + currentEdge.getWeight()) {
                     /**
-                     * Reset Graph weight if INFINT to add weight to it
-                     */
-                    if (currentEndGraph.getTotalWeight() == Double.POSITIVE_INFINITY) {
-                        currentEndGraph.setTotalWeight(0.0);
-                    }
-                    /**
                      * put Nodes and Edges from StartGraph into Endgraph
                      */
-                    for (Edge ed : currentStartGraph.getEdges()) {
-                        currentEndGraph.addEdge(ed);
-                        currentEndGraph.addToTotalWeight(ed.getWeight());
-                    }
-                    for (Node no : currentStartGraph.getNodes()) {
-                        if (!currentEndGraph.getNodes().contains(no)) {
-                            currentEndGraph.addNode(no);
-                        }
-                    }
+                    currentEndGraph.edges.addAll(currentStartGraph.getEdges());
+                    currentEndGraph.setTotalWeight(currentStartGraph.getTotalWeight());
+                    currentEndGraph.nodes.addAll(currentStartGraph.getNodes());
 
                     /**
                      * Add the connecting Edge to the endNodeGraph
@@ -846,12 +875,47 @@ public class Graph {
 
         }
 
-        return hmNodeGraph.get(endNode);
+        return hmNodeGraph.get(workingGraph.getNode(endNode.getIndex()));
     }
 
+    public Graph bellmanFordMoore(Node StartNode,Node end){
+        Graph result = new Graph();
+        ArrayList<Double> distance = new ArrayList<>();
+        ArrayList<Integer> prev = new ArrayList<>();
+        this.unVisitNodes();
+        for(Node v:this.getNodes()){
+            distance.add(v.getIndex(), Double.POSITIVE_INFINITY);
+            prev.add(v.getIndex(), null);
+        }
+        distance.set(StartNode.getIndex(),0.0);
+        prev.set(0,0);
+        for(int i = 0;i<this.getNodes().size()-1;++i){
+            for(Edge e:this.getEdges()){
+                if(distance.get(e.getStart().getIndex())+e.getWeight()<distance.get(e.getEnd().getIndex())){
+                    distance.set(e.getEnd().getIndex(),e.getWeight()+distance.get(e.getStart().getIndex()));
+                    prev.set(e.getEnd().getIndex(),e.getStart().getIndex());
+                }
+            }
+        }
+        for(Edge e:this.getEdges()){
+            if(distance.get(e.getStart().getIndex())+e.getWeight()<distance.get(e.getEnd().getIndex())){
+                System.out.println("Zyklus gefunden:"+e+"\n");
+                return null;
+            }
+        }
+        for(int i = 0;i<this.getNodes().size()-1;++i){
+            result.addNode(this.getNode(i));
+            result.addEdge(new Edge(this.getNode(prev.get(i)),this.getNode(i),distance.get(i)));
+            if(i == end.getIndex()){
+                return result;
+            }
+        }
+        return result;
+    }
 
     private Graph removeUnusedEdges() {
         Graph result = new Graph();
+        result.setDirected(this.directed);
         for (Node n : this.getNodes()) {
             result.addNode(new Node(n.getIndex()));
         }

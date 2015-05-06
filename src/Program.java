@@ -41,7 +41,8 @@ public class Program {
 
             double start = System.nanoTime();
             //LinkedList<Graph> tspGraph = g.tspBruteForce(startNode, false);
-            Graph dijkstraGraph = g.dijkstra(startNode, endNode);
+            Graph dijkstraGraph = g.newDijkstra(startNode, endNode);
+            //Graph moore = g.bellmanFordMoore(startNode,endNode);
 
             double end = System.nanoTime();
             in.close();
