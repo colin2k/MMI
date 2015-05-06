@@ -20,6 +20,8 @@ public class Graph {
     private List<Node> nodes;
     private List<Edge> edges;
 
+
+    private boolean directed = false;
     private Double totalWeight;
 
     /**
@@ -65,12 +67,14 @@ public class Graph {
      *
      * @param source   BufferedReader
      * @param fileType int (AD_MATRIX | EDGE_LIST | EDGE_LIST_WEIGHT)
+     * @param directed   boolean
      */
-    public Graph(BufferedReader source, int fileType) {
+    public Graph(BufferedReader source, int fileType,boolean directed) {
         this.nodes = new Vector<>();
         this.edges = new Vector<>();
+        this.directed = directed;
 
-        this.initFromSource(source, fileType);
+        this.initFromSource(source, fileType,directed);
     }
 
     /**
@@ -108,11 +112,13 @@ public class Graph {
      * @param i Node
      * @param j Node
      * @return Edge
+     *
      */
     protected Edge connect(Node i, Node j) {
         for (Edge e : this.getEdges()) {
-            if ((e.getStart() == i && e.getEnd() == j) ||
-                    (e.getStart() == j && e.getEnd() == i)) {
+            if ((e.getStart() == i && e.getEnd() == j)
+                    || (this.directed && (e.getStart() == j && e.getEnd() == i)))
+                     {
                 return e;
             }
         }
@@ -169,8 +175,9 @@ public class Graph {
      *
      * @param source   BufferedReader
      * @param fileType int
+     * @param directed boolean
      */
-    public void initFromSource(BufferedReader source, int fileType) {
+    public void initFromSource(BufferedReader source, int fileType,boolean directed) {
 
         try {
             // get number of nodes from first line
@@ -226,15 +233,21 @@ public class Graph {
                     Node nodeTo = this.nodes.get(Integer.parseInt(straBuf[1]));
 
                     Edge newEdge = new Edge(nodeFrom, nodeTo, Double.parseDouble(straBuf[2]));
-                    Edge newEdgeReverse = new Edge(nodeTo, nodeFrom, Double.parseDouble(straBuf[2]));
+                    if(!directed) {
+                        Edge newEdgeReverse = new Edge(nodeTo, nodeFrom, Double.parseDouble(straBuf[2]));
+                        nodeTo.addEdge(newEdgeReverse);
+                        nodeFrom.addEdge(newEdgeReverse);
+                        this.addEdge(newEdgeReverse);
+                        nodeTo.addEdge(newEdge);
+
+                    }
 
                     nodeFrom.addEdge(newEdge);
-                    nodeFrom.addEdge(newEdgeReverse);
-                    nodeTo.addEdge(newEdge);
-                    nodeTo.addEdge(newEdgeReverse);
+
+
 
                     this.addEdge(newEdge);
-                    this.addEdge(newEdgeReverse);
+
 
                 } else {
                     System.out.println("Fehler: Falscher Dateityp");
@@ -684,14 +697,12 @@ public class Graph {
              * Branch and Bound
              * - set new Bound
              */
-            if (bnb) {
+
                 if (toTraverse.totalWeight > currentTour.getTotalWeight()) {
                     toTraverse.totalWeight = currentTour.getTotalWeight();
                     resultGraphs.add(currentTour);
                 }
-            } else {
-                resultGraphs.add(currentTour);
-            }
+
 
         } else {
             /**
@@ -739,6 +750,36 @@ public class Graph {
     }
 
 
+    public Graph dijkstraNew(Node startNode,Node endNode){
+        Graph result = new Graph();
+        startNode.weight = 0.0;
+        for(Node n:this.nodes){
+            if(n != startNode){
+                n.weight = Double.POSITIVE_INFINITY;
+            }
+        }
+
+        for(Edge e: startNode.getEdges()){
+            e.getEnd().weight = e.getWeight();
+        }
+        PriorityQueue<Node> prioNodeQueue = new PriorityQueue<>();
+
+        prioNodeQueue.addAll(this.getNodes());
+        Node currentNode;
+
+        while(!prioNodeQueue.isEmpty()){
+            currentNode = prioNodeQueue.remove();
+            if(!currentNode.getVisited()) {
+                result.addNode(currentNode);
+                currentNode.visit();
+            }
+            if(currentNode == endNode){
+                return result;
+            }
+        }
+        return result;
+
+    }
     public Graph dijkstra(Node startNode, Node endNode) {
 
         this.unVisitNodes();
@@ -749,6 +790,7 @@ public class Graph {
         Edge currentEdge;
 
         PriorityQueue<Edge> prioEdgeQueue = new PriorityQueue<>();
+
         prioEdgeQueue.addAll(startNode.getEdges());
         /**
          * HashMap of shortest Paths to all Nodes
@@ -762,8 +804,9 @@ public class Graph {
          */
         for (Node n : this.getNodes()) {
             Graph tmpGraph = new Graph();
-            tmpGraph.addNode(startNode);
+            tmpGraph.setDirected(this.directed);
             if (n == startNode) {
+                tmpGraph.addNode(startNode);
                 hmNodeGraph.put(n, tmpGraph);
             } else {
                 tmpGraph.setTotalWeight(Double.POSITIVE_INFINITY);
@@ -787,43 +830,31 @@ public class Graph {
                  */
                 Graph currentEndGraph = hmNodeGraph.get(currentEdge.getEnd());
                 Graph currentStartGraph = hmNodeGraph.get(currentEdge.getStart());
+
                 Edge connectingEdge = this.connect(currentEdge.getStart(), currentEdge.getEnd());
 
+                if (currentEndGraph.getTotalWeight() > (currentStartGraph.getTotalWeight() + currentEdge.getWeight())) {
 
-                if (currentEndGraph.getTotalWeight() > currentStartGraph.getTotalWeight() + currentEdge.getWeight()) {
-                    /**
-                     * Reset Graph weight if INFINT to add weight to it
-                     */
-                    if (currentEndGraph.getTotalWeight() == Double.POSITIVE_INFINITY) {
-                        currentEndGraph.setTotalWeight(0.0);
-                    }
+                    currentEndGraph.setTotalWeight(currentStartGraph.getTotalWeight() + connectingEdge.getWeight());
+                    currentEdge.getEnd().visit();
+
                     /**
                      * put Nodes and Edges from StartGraph into Endgraph
+                     * +current edge and endNode
                      */
-                    for (Edge ed : currentStartGraph.getEdges()) {
-                        currentEndGraph.addEdge(ed);
-                        currentEndGraph.addToTotalWeight(ed.getWeight());
-                    }
-                    for (Node no : currentStartGraph.getNodes()) {
-                        if (!currentEndGraph.getNodes().contains(no)) {
-                            currentEndGraph.addNode(no);
-                        }
-                    }
-
-                    /**
-                     * Add the connecting Edge to the endNodeGraph
-                     */
-                    currentEndGraph.addToTotalWeight(connectingEdge.getWeight());
-
+                    currentEndGraph.nodes.addAll(currentStartGraph.getNodes());
                     currentEndGraph.addNode(currentEdge.getEnd());
+
+                    currentEndGraph.edges.addAll(currentStartGraph.getEdges());
                     currentEndGraph.addEdge(connectingEdge);
-                    currentEdge.getEnd().visit();
+
+
                     /**
                      * add all Edges from endnode to priority queue + the way travled already
                      */
                     for (Edge enqueEdge : currentEdge.getEnd().getEdges()) {
                         if (!enqueEdge.getEnd().getVisited()) {
-                            prioEdgeQueue.add(new Edge(enqueEdge.getStart(), enqueEdge.getEnd(), enqueEdge.getWeight() + currentStartGraph.getTotalWeight()));
+                            prioEdgeQueue.add(new Edge(enqueEdge.getStart(), enqueEdge.getEnd(), (enqueEdge.getWeight() + currentStartGraph.getTotalWeight())));
                         }
                     }
                 }
@@ -834,6 +865,11 @@ public class Graph {
         return hmNodeGraph.get(endNode);
     }
 
+    public Graph moorBelmondFord(){
+        Graph result = new Graph();
+
+        return result;
+    }
 
     private Graph removeUnusedEdges() {
         Graph result = new Graph();
@@ -848,6 +884,10 @@ public class Graph {
         }
 
         return result;
+    }
+
+    private void setDirected(boolean directed){
+        this.directed = directed;
     }
 
 

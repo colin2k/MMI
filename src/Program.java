@@ -26,29 +26,33 @@ public class Program {
             BufferedReader in = new BufferedReader(new FileReader(
                     //"graphen/K_12.txt"));
                     //"graphen/K_12e.txt"));
-                    "graphen/K_10.txt"));
-            //"graphen/K_10e.txt"));
-            //"graphen/G_100_200.txt"));
+                    //"graphen/K_10.txt"));
+                    //"graphen/K_10e.txt"));
+                    "graphen/G_1_2.txt"));
+                    //"graphen/Wege2.txt"));
+                    //"graphen/miniTestGraph.txt"));
 
-            Graph g = new Graph(in, EDGE_LIST_WEIGHT);
+            boolean directed = true;
+            Graph g = new Graph(in, EDGE_LIST_WEIGHT,directed);
 
             Node startNode = g.getNode(0);
-            Node endNode = g.getNode(6);
+            Node endNode = g.getNode(1);
 
-            // Branch and Bound
 
             double start = System.nanoTime();
-            LinkedList<Graph> tspGraph = g.tspBruteForce(startNode, false);
+
+            //LinkedList<Graph> tspGraph = g.tspBruteForce(startNode, false);
             Graph dijkstraGraph = g.dijkstra(startNode, endNode);
 
             double end = System.nanoTime();
             in.close();
 
+            /*
             System.out.println("\n\nTSP:");
             System.out.println(tspGraph.removeLast());
             System.out.println("GraphCount:" + tspGraph.size());
             System.out.println("Time: " + ((end - start) / 1000000000) + "s");
-
+            */
             System.out.println("\n\nDijkstra:");
             System.out.println(dijkstraGraph);
             System.out.println("Time: " + ((end - start) / 1000000000) + "s");

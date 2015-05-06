@@ -10,11 +10,26 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
 
-public class Node {
+public class Node implements Comparable<Node> {
 
     private int index;
     private boolean visited = false;
     private LinkedList<Edge> edges;
+
+    public Double weight;
+
+
+
+    /**
+     * Compare Node to another
+     *
+     * @param n1 @NotNull Edge
+     * @return int
+     */
+    public int compareTo(Node n1) {
+
+        return Double.compare(this.weight, n1.weight);
+    }
 
     /**
      * Construct for Node
