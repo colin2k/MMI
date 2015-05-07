@@ -754,46 +754,6 @@ public class Graph {
         }
     }
 
-    public Graph newDijkstra(Node startNode,Node endNode){
-        Graph result = new Graph();
-        ArrayList<Double> distance = new ArrayList<>();
-        ArrayList<Integer> prev = new ArrayList<>();
-        PriorityQueue<Node> Q = new PriorityQueue<>();
-        this.unVisitNodes();
-        for(Node n: this.getNodes()){
-            distance.add(n.getIndex(),Double.POSITIVE_INFINITY);
-            prev.add(n.getIndex(),null);
-        }
-
-        distance.add(startNode.getIndex(),0.0);
-        Q.add(startNode);
-        while(!Q.isEmpty()){
-            Node currentNode = Q.remove();
-            if(!currentNode.getVisited()) {
-                currentNode.visit();
-                for (Edge e : currentNode.getEdges()) {
-                    Double alternateWeight = distance.get(e.getStart().getIndex())+e.getWeight();
-                    if (alternateWeight < distance.get(e.getEnd().getIndex())) {
-                        distance.set(e.getEnd().getIndex(),alternateWeight);
-                        prev.set(e.getEnd().getIndex(),e.getStart().getIndex());
-                    }
-                    e.getEnd().setWeight(e.getWeight());
-                    Q.add(e.getEnd());
-                }
-            }
-        }
-
-        for(int i = 0;i<this.getNodes().size()-1;++i){
-            result.addNode(this.getNode(i));
-
-            if(i == endNode.getIndex()){
-                result.addEdge(new Edge(this.getNode(prev.get(i)), this.getNode(i), distance.get(i)));
-                return result;
-            }
-        }
-        return result;
-
-    }
     public Graph dijkstra(Node startNode, Node endNode) {
 
         this.unVisitNodes();
@@ -834,19 +794,16 @@ public class Graph {
          */
         while (!prioEdgeQueue.isEmpty()) {
             currentEdge = prioEdgeQueue.remove();
-
+            /**
+             * currentEndGraph - Graph from HashMap for endNode of current Edge
+             * currentStartGraph - Graph from HashMap for startNode of current Edge
+             * connectingEdge - Edge from original Graph with correct weight
+             */
+            Graph currentEndGraph = hmNodeGraph.get(currentEdge.getEnd());
+            Graph currentStartGraph = hmNodeGraph.get(currentEdge.getStart());
+            Edge connectingEdge = workingGraph.connect(currentEdge.getStart(), currentEdge.getEnd());
             if (!currentEdge.getEnd().getVisited()) {
-                /**
-                 * currentEndGraph - Graph from HashMap for endNode of current Edge
-                 * currentStartGraph - Graph from HashMap for startNode of current Edge
-                 * connectingEdge - Edge from original Graph with correct weight
-                 */
-                Graph currentEndGraph = hmNodeGraph.get(currentEdge.getEnd());
-                Graph currentStartGraph = hmNodeGraph.get(currentEdge.getStart());
-                Edge connectingEdge = workingGraph.connect(currentEdge.getStart(), currentEdge.getEnd());
 
-
-                if (currentEndGraph.getTotalWeight() > currentStartGraph.getTotalWeight() + currentEdge.getWeight()) {
                     /**
                      * put Nodes and Edges from StartGraph into Endgraph
                      */
@@ -870,6 +827,23 @@ public class Graph {
                             prioEdgeQueue.add(new Edge(enqueEdge.getStart(), enqueEdge.getEnd(), enqueEdge.getWeight() + currentStartGraph.getTotalWeight()));
                         }
                     }
+                }
+            else{
+                if (currentEndGraph.getTotalWeight() > currentStartGraph.getTotalWeight() + connectingEdge.getWeight()) {
+                    /**
+                     * put Nodes and Edges from StartGraph into Endgraph
+                     */
+                    currentEndGraph.edges = currentStartGraph.getEdges();
+                    currentEndGraph.setTotalWeight(currentStartGraph.getTotalWeight());
+                    currentEndGraph.nodes = currentStartGraph.getNodes();
+
+                    /**
+                     * Add the connecting Edge to the endNodeGraph
+                     */
+                    currentEndGraph.addToTotalWeight(connectingEdge.getWeight());
+
+                    currentEndGraph.addNode(currentEdge.getEnd());
+                    currentEndGraph.addEdge(connectingEdge);
                 }
             }
 

@@ -30,7 +30,7 @@ public class Program {
             //"graphen/K_10e.txt"));
             "graphen/G_1_2.txt"));
 
-            Graph g = new Graph(in, EDGE_LIST_WEIGHT,true);
+            Graph g = new Graph(in, EDGE_LIST_WEIGHT,false);
 
             Node startNode = g.getNode(0);
             Node endNode = g.getNode(1);
@@ -41,8 +41,8 @@ public class Program {
 
             double start = System.nanoTime();
             //LinkedList<Graph> tspGraph = g.tspBruteForce(startNode, false);
-            Graph dijkstraGraph = g.newDijkstra(startNode, endNode);
-            //Graph moore = g.bellmanFordMoore(startNode,endNode);
+            Graph dijkstra = g.dijkstra(startNode, endNode);
+            Graph moore = g.bellmanFordMoore(startNode, endNode);
 
             double end = System.nanoTime();
             in.close();
@@ -54,7 +54,10 @@ public class Program {
             System.out.println("Time: " + ((end - start) / 1000000000) + "s");
 */
             System.out.println("\n\nDijkstra:");
-            System.out.println(dijkstraGraph);
+            System.out.println(dijkstra);
+            System.out.println("Time: " + ((end - start) / 1000000000) + "s");
+            System.out.println("\n\nBellmanFordMoore:"+startNode+','+endNode);
+            System.out.println(moore);
             System.out.println("Time: " + ((end - start) / 1000000000) + "s");
             // Error Handling...
         } catch (IOException e) {
