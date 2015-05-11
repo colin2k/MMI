@@ -47,13 +47,8 @@ public class Program {
             double end = System.nanoTime();
             in.close();
 
-            /*
-            System.out.println("\n\nTSP:");
-            System.out.println(tspGraph.removeLast());
-            System.out.println("GraphCount:" + tspGraph.size());
-            System.out.println("Time: " + ((end - start) / 1000000000) + "s");
-*/
-            System.out.println("\n\nDijkstra:");
+
+            System.out.println("\n\nDijkstra:"+startNode+','+endNode);
             System.out.println(dijkstra);
             System.out.println("Time: " + ((end - start) / 1000000000) + "s");
             System.out.println("\n\nBellmanFordMoore:"+startNode+','+endNode);

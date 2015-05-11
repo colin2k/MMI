@@ -757,7 +757,7 @@ public class Graph {
     public Graph dijkstra(Node startNode, Node endNode) {
 
         this.unVisitNodes();
-        Graph workingGraph = this.removeUnusedEdges();
+        Graph workingGraph = this.clone();
         Node newStartnode = workingGraph.getNode(startNode.getIndex());
         /**
          * initialize
@@ -779,8 +779,9 @@ public class Graph {
         for (Node n : workingGraph.getNodes()) {
             Graph tmpGraph = new Graph();
             tmpGraph.setDirected(workingGraph.directed);
+
             if (n == newStartnode) {
-                hmNodeGraph.put(n, tmpGraph);
+                tmpGraph.addNode(startNode);
             } else {
                 tmpGraph.setTotalWeight(Double.POSITIVE_INFINITY);
             }
@@ -838,12 +839,10 @@ public class Graph {
                     currentEndGraph.nodes = currentStartGraph.getNodes();
 
                     /**
-                     * Add the connecting Edge to the endNodeGraph
+                     * Add the connecting Edge Weight to the endNodeGraph
                      */
                     currentEndGraph.addToTotalWeight(connectingEdge.getWeight());
 
-                    currentEndGraph.addNode(currentEdge.getEnd());
-                    currentEndGraph.addEdge(connectingEdge);
                 }
             }
 
@@ -854,6 +853,7 @@ public class Graph {
 
     public Graph bellmanFordMoore(Node StartNode,Node end){
         Graph result = new Graph();
+
         ArrayList<Double> distance = new ArrayList<>();
         ArrayList<Integer> prev = new ArrayList<>();
         this.unVisitNodes();
@@ -878,14 +878,17 @@ public class Graph {
                 return result;
             }
         }
-        for(int i = 0;i<this.getNodes().size()-1;++i){
-            result.addNode(this.getNode(i));
-            result.addEdge(new Edge(this.getNode(prev.get(i)),this.getNode(i),distance.get(i)));
-            if(i == end.getIndex()){
-                return result;
-            }
+
+        Node tmpNode = end;
+        while(tmpNode != StartNode){
+            result.addNode(tmpNode);
+            Node nextNode = this.getNode(prev.get(tmpNode.getIndex()));
+            Edge connectingEdge = this.connect(tmpNode,nextNode);
+            result.addEdge(connectingEdge);
+            result.addToTotalWeight(connectingEdge.getWeight());
+            tmpNode = nextNode;
         }
-        
+        result.addNode(StartNode);
         return result;
     }
 
