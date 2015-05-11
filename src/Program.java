@@ -30,7 +30,7 @@ public class Program {
             //"graphen/K_10e.txt"));
             "graphen/G_1_2.txt"));
 
-            Graph g = new Graph(in, EDGE_LIST_WEIGHT,false);
+            Graph g = new Graph(in, EDGE_LIST_WEIGHT,true);
 
             Node startNode = g.getNode(0);
             Node endNode = g.getNode(1);

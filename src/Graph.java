@@ -874,7 +874,8 @@ public class Graph {
         for(Edge e:this.getEdges()){
             if(distance.get(e.getStart().getIndex())+e.getWeight()<distance.get(e.getEnd().getIndex())){
                 System.out.println("Zyklus gefunden:"+e+"\n");
-                return null;
+                result.addEdge(e);
+                return result;
             }
         }
         for(int i = 0;i<this.getNodes().size()-1;++i){
@@ -884,6 +885,7 @@ public class Graph {
                 return result;
             }
         }
+        
         return result;
     }
 
