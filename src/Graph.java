@@ -40,6 +40,7 @@ public class Graph {
         this.nodes = new LinkedList<>();
         this.edges = new LinkedList<>();
         this.totalWeight = 0.0;
+        this.flow = 0.0;
 
     }
 
@@ -123,6 +124,7 @@ public class Graph {
             this.totalWeight += weight;
         }
     }
+
 
     /**
      * Connecting to Nodes with matching edge or new Edge
@@ -479,79 +481,6 @@ public class Graph {
         return bottleNeck;
     }
 
-    private Graph findPath(Node start, Node end) {
-        // Initialize result Graph and llNodes LinkedList of Nodes as Stack
-        Graph result = new Graph();
-        LinkedList<Node> llNodes = new LinkedList<>();
-
-        // reset visited flag for all Nodes
-        this.unVisitNodes();
-
-        // Temporary Node to pop Nodes from Stack
-        Node tmpNode;
-
-        // add Start Node to Queue
-        llNodes.add(start);
-
-        // add Start Node to result-graph
-        result.addNode(start);
-
-
-        // until Queue is empty
-        while (!llNodes.isEmpty()) {
-
-            // Pop First Element from Stack
-            tmpNode = llNodes.pop();
-
-            // for each incoming edge in current node as currentEdge
-            for (Edge currentEdge : tmpNode.getEdges()) {
-
-                // if end of current Edge not in result-graph
-                if (!(currentEdge.getEnd().getVisited()) && (currentEdge.getWeight()) >0.0) {
-
-
-                    // visit Node
-                    currentEdge.getEnd().visit();
-                    // put start of current Edge on stack
-                    llNodes.add(currentEdge.getEnd());
-
-                    // add start of current Edge to result Graph
-                    result.addNode(currentEdge.getEnd());
-
-                    // add current Edge to result Graph
-                    result.addEdge(currentEdge);
-                    if (currentEdge.getEnd() == end) {
-
-                        llNodes.clear();
-                        break;
-
-                    }
-                }
-            }
-        }
-        if (result.getEdges().size() == 0) {
-            return result;
-
-        }
-        Graph tmpGraph = new Graph();
-        Double bottleneck = Double.POSITIVE_INFINITY;
-        while (start != end) {
-            for (Edge e : result.getEdges()) {
-                if (e.getEnd() == end) {
-                    if (e.getWeight() < bottleneck) {
-                        bottleneck = e.getWeight();
-                    }
-
-                    tmpGraph.addNode(end);
-                    end = e.getStart();
-                    tmpGraph.addEdge(e);
-                }
-            }
-        }
-        tmpGraph.addNode(start);
-        tmpGraph.setTotalWeight(bottleneck);
-        return tmpGraph;
-    }
 
 
     /**
@@ -1002,41 +931,130 @@ public class Graph {
 
 
     public Graph fordFulkerson(Node source, Node target) {
-        //residualGraph
-        Graph residual = new Graph();
+
 
         //result Graph
         Graph result = new Graph();
 
-        //adding all Nodes
+        //adding all Nodes to result Graph
+        result.nodes = this.getNodes();
+
+        //Init result graph Edges with Flow 0.0
+        for (Edge e : this.getEdges()) {
+            e.setFlow(0.0);
+            result.addEdge(e);
+        }
+        //residualGraph
+        Graph residual = result.buildResidualGraph();
+
+
+        // while augumented path is found
+        while(residual.findPath(residual.getNode(source.getIndex()), residual.getNode(target.getIndex())));
+        result.setFlow(residual.getFlow());
+        return result;
+    }
+    private Graph buildResidualGraph(){
+        Graph residual = new Graph();
+
+        //adding new Nodes
         for (Node n : this.getNodes()) {
             residual.addNode(new Node(n.getIndex()));
-            result.addNode(n);
         }
 
-        //adding all edges
-        //Init Edges with Flow 0.0
+        //Create residual graph edges
         for (Edge e : this.getEdges()) {
-            result.addEdge(new Edge(e.getStart(), e.getEnd(), e.getWeight(),0.0));
-            residual.addEdge(new Edge(residual.getNode(e.getStart().getIndex()), residual.getNode(e.getEnd().getIndex()),0.0));
+            Node rFrom = residual.getNode(e.getStart().getIndex());
+            Node rTo = residual.getNode(e.getEnd().getIndex());
+            Edge rEdge =new Edge(rFrom, rTo,e.getWeight());
+            residual.addEdge(rEdge);
+            rFrom.addEdge(rEdge);
+        }
+        return residual;
+    }
+    private boolean findPath(Node start, Node end) {
+        // Initialize result Graph and llNodes LinkedList of Nodes as Stack
+        Graph result = new Graph();
+        LinkedList<Node> llNodes = new LinkedList<>();
+
+        // reset visited flag for all Nodes
+        this.unVisitNodes();
+
+        // Temporary Node to pop Nodes from Stack
+        Node tmpNode;
+
+        // add Start Node to Queue
+        llNodes.add(start);
+
+        // add Start Node to result-graph
+        result.addNode(start);
+
+        Double bottleneck = Double.POSITIVE_INFINITY;
+
+        // until Queue is empty
+        while (!llNodes.isEmpty()) {
+
+            // Pop First Element from Stack
+            tmpNode = llNodes.pop();
+
+            // for each incoming edge in current node as currentEdge
+            for (Edge currentEdge : tmpNode.getEdges()) {
+
+                // if end of current Edge not in result-graph
+                if (!(currentEdge.getEnd().getVisited())) {
+
+                    // visit Node
+                    currentEdge.getEnd().visit();
+                    // put start of current Edge on stack
+                    llNodes.add(currentEdge.getEnd());
+
+                    // add start of current Edge to result Graph
+                    result.addNode(currentEdge.getEnd());
+
+
+                    // add current Edge to result Graph
+                    result.addEdge(currentEdge);
+                    if (currentEdge.getEnd() == end) {
+                        llNodes.clear();
+                        break;
+
+                    }
+                }
+            }
+        }
+        if (!result.getNodes().contains(end)) {
+            return false;
+
         }
 
-
-        //find augumanting path
-        Graph path = residual.findPath(source, target);
-
-        Double Flow = path.getTotalWeight();
-
-        for (int i=0;i<this.getEdges().size()|| path.getEdges().size() == 0;i++) {
-            // update residualgraph
-            result.computePath(residual,path);
-            path = residual.findPath(source, target);
-            Flow += path.getTotalWeight();
+        Graph path = new Graph();
+        //update residual Graph
+        while (start != end) {
+            for (Edge e : result.getEdges()) {
+                if (e.getEnd() == end) {
+                    if(bottleneck>e.getWeight()){
+                        bottleneck = e.getWeight();
+                    }
+                    end = e.getStart();
+                    path.addEdge(e);
+                    break;
+                }
+            }
         }
 
-        result.setFlow(Flow);
-
-        return result;
+        for(Edge e:path.getEdges()){
+            Edge rEdge = new Edge(e.getEnd(),e.getStart(),bottleneck);
+            this.addEdge(rEdge);
+            e.getEnd().addEdge(rEdge);
+            if(e.getWeight()-bottleneck > 0) {
+                e.setWeight(e.getWeight() - bottleneck);
+            }
+            else{
+                this.removeEdge(e);
+                e.getStart().removeEdge(e);
+            }
+        }
+        this.setFlow(this.getFlow()+bottleneck);
+        return true;
     }
 
     private void computePath(Graph residual,Graph path) {
