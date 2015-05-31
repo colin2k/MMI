@@ -8,7 +8,6 @@
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.*;
 
 
@@ -22,6 +21,7 @@ public class Graph {
     private List<Edge> edges;
 
     private Double totalWeight;
+    private Double flow;
 
     public boolean isDirected() {
         return directed;
@@ -31,7 +31,7 @@ public class Graph {
         this.directed = directed;
     }
 
-    private boolean directed= false;
+    private boolean directed = false;
 
     /**
      * empty construct - initialize node list - initialize edge list
@@ -79,7 +79,7 @@ public class Graph {
      * @param source   BufferedReader
      * @param fileType int (AD_MATRIX | EDGE_LIST | EDGE_LIST_WEIGHT)
      */
-    public Graph(BufferedReader source, int fileType,boolean directed) {
+    public Graph(BufferedReader source, int fileType, boolean directed) {
         this.nodes = new Vector<>();
         this.edges = new Vector<>();
         this.directed = directed;
@@ -94,6 +94,14 @@ public class Graph {
      */
     public Double getTotalWeight() {
         return this.totalWeight;
+    }
+
+    public Double getFlow() {
+        return this.flow;
+    }
+
+    public void setFlow(Double flow) {
+        this.flow = flow;
     }
 
     /**
@@ -130,7 +138,7 @@ public class Graph {
                 return e;
             }
         }
-        return new Edge(i, j);
+        return null;
     }
 
     /**
@@ -148,6 +156,7 @@ public class Graph {
             result += e + "\n";
         }
         result += "\nWeight:" + this.getTotalWeight();
+        result += "\nFlow:" + this.getFlow();
         return result;
     }
 
@@ -188,7 +197,8 @@ public class Graph {
 
         try {
             // get number of nodes from first line
-            int nodeCount = Integer.parseInt(source.readLine());
+            int nodeCount = Integer.parseInt(source.readLine().replaceAll("\\s", ""));
+
 
             for (int i = 0; i < nodeCount; i++) {
                 // create Node and add to Graph
@@ -240,15 +250,16 @@ public class Graph {
                     Node nodeTo = this.nodes.get(Integer.parseInt(straBuf[1]));
 
                     Edge newEdge = new Edge(nodeFrom, nodeTo, Double.parseDouble(straBuf[2]));
-                    if(!this.directed){
+                    if (!this.directed) {
                         Edge newEdgeReverse = new Edge(nodeTo, nodeFrom, Double.parseDouble(straBuf[2]));
                         nodeFrom.addEdge(newEdgeReverse);
                         nodeTo.addEdge(newEdgeReverse);
                         this.addEdge(newEdgeReverse);
                     }
 
-                    nodeFrom.addEdge(newEdge);
                     nodeTo.addEdge(newEdge);
+
+                    nodeFrom.addEdge(newEdge);
 
                     this.addEdge(newEdge);
 
@@ -294,6 +305,16 @@ public class Graph {
      */
     private void addEdge(Edge e) {
         this.edges.add(e);
+    }
+
+    private void removeEdge(Edge e) {
+        this.edges.remove(e);
+        for(Node n :this.getNodes()){
+            if(n.getEdges().contains(e)){
+                n.removeEdge(e);
+            }
+        }
+
     }
 
     /**
@@ -393,7 +414,7 @@ public class Graph {
     }
 
     /**
-     * Breadth first search on current Graph
+     * Breadth first search on current Graph without end
      *
      * @param start Node
      * @return Graph
@@ -425,15 +446,15 @@ public class Graph {
             for (Edge currentEdge : tmpNode.getEdges()) {
 
                 // if end of current Edge not in result-graph
-                if (!(currentEdge.getStart().getVisited())) {
+                if (!(currentEdge.getEnd().getVisited())) {
 
                     // visit Node
-                    currentEdge.getStart().visit();
+                    currentEdge.getEnd().visit();
                     // put start of current Edge on stack
-                    llNodes.add(currentEdge.getStart());
+                    llNodes.add(currentEdge.getEnd());
 
                     // add start of current Edge to result Graph
-                    result.addNode(currentEdge.getStart());
+                    result.addNode(currentEdge.getEnd());
 
                     // add current Edge to result Graph
                     result.addEdge(currentEdge);
@@ -442,6 +463,94 @@ public class Graph {
         }
 
         return result;
+    }
+
+    /**
+     * Breadth first search on current Graph from start to end
+     *
+     * @return Double
+     */
+    public Double findBottelneck(Graph g) {
+        Double bottleNeck = Double.POSITIVE_INFINITY;
+        for (Edge e : g.getEdges()) {
+            if (e.getWeight() < bottleNeck)
+                bottleNeck = e.getWeight();
+        }
+        return bottleNeck;
+    }
+
+    private Graph findPath(Node start, Node end) {
+        // Initialize result Graph and llNodes LinkedList of Nodes as Stack
+        Graph result = new Graph();
+        LinkedList<Node> llNodes = new LinkedList<>();
+
+        // reset visited flag for all Nodes
+        this.unVisitNodes();
+
+        // Temporary Node to pop Nodes from Stack
+        Node tmpNode;
+
+        // add Start Node to Queue
+        llNodes.add(start);
+
+        // add Start Node to result-graph
+        result.addNode(start);
+
+
+        // until Queue is empty
+        while (!llNodes.isEmpty()) {
+
+            // Pop First Element from Stack
+            tmpNode = llNodes.pop();
+
+            // for each incoming edge in current node as currentEdge
+            for (Edge currentEdge : tmpNode.getEdges()) {
+
+                // if end of current Edge not in result-graph
+                if (!(currentEdge.getEnd().getVisited()) && (currentEdge.getWeight()) >0.0) {
+
+
+                    // visit Node
+                    currentEdge.getEnd().visit();
+                    // put start of current Edge on stack
+                    llNodes.add(currentEdge.getEnd());
+
+                    // add start of current Edge to result Graph
+                    result.addNode(currentEdge.getEnd());
+
+                    // add current Edge to result Graph
+                    result.addEdge(currentEdge);
+                    if (currentEdge.getEnd() == end) {
+
+                        llNodes.clear();
+                        break;
+
+                    }
+                }
+            }
+        }
+        if (result.getEdges().size() == 0) {
+            return result;
+
+        }
+        Graph tmpGraph = new Graph();
+        Double bottleneck = Double.POSITIVE_INFINITY;
+        while (start != end) {
+            for (Edge e : result.getEdges()) {
+                if (e.getEnd() == end) {
+                    if (e.getWeight() < bottleneck) {
+                        bottleneck = e.getWeight();
+                    }
+
+                    tmpGraph.addNode(end);
+                    end = e.getStart();
+                    tmpGraph.addEdge(e);
+                }
+            }
+        }
+        tmpGraph.addNode(start);
+        tmpGraph.setTotalWeight(bottleneck);
+        return tmpGraph;
     }
 
 
@@ -805,31 +914,30 @@ public class Graph {
             Edge connectingEdge = workingGraph.connect(currentEdge.getStart(), currentEdge.getEnd());
             if (!currentEdge.getEnd().getVisited()) {
 
-                    /**
-                     * put Nodes and Edges from StartGraph into Endgraph
-                     */
-                    currentEndGraph.edges.addAll(currentStartGraph.getEdges());
-                    currentEndGraph.setTotalWeight(currentStartGraph.getTotalWeight());
-                    currentEndGraph.nodes.addAll(currentStartGraph.getNodes());
+                /**
+                 * put Nodes and Edges from StartGraph into Endgraph
+                 */
+                currentEndGraph.edges.addAll(currentStartGraph.getEdges());
+                currentEndGraph.setTotalWeight(currentStartGraph.getTotalWeight());
+                currentEndGraph.nodes.addAll(currentStartGraph.getNodes());
 
-                    /**
-                     * Add the connecting Edge to the endNodeGraph
-                     */
-                    currentEndGraph.addToTotalWeight(connectingEdge.getWeight());
+                /**
+                 * Add the connecting Edge to the endNodeGraph
+                 */
+                currentEndGraph.addToTotalWeight(connectingEdge.getWeight());
 
-                    currentEndGraph.addNode(currentEdge.getEnd());
-                    currentEndGraph.addEdge(connectingEdge);
-                    currentEdge.getEnd().visit();
-                    /**
-                     * add all Edges from endnode to priority queue + the way travled already
-                     */
-                    for (Edge enqueEdge : currentEdge.getEnd().getEdges()) {
-                        if (!enqueEdge.getEnd().getVisited()) {
-                            prioEdgeQueue.add(new Edge(enqueEdge.getStart(), enqueEdge.getEnd(), enqueEdge.getWeight() + currentStartGraph.getTotalWeight()));
-                        }
+                currentEndGraph.addNode(currentEdge.getEnd());
+                currentEndGraph.addEdge(connectingEdge);
+                currentEdge.getEnd().visit();
+                /**
+                 * add all Edges from endnode to priority queue + the way travled already
+                 */
+                for (Edge enqueEdge : currentEdge.getEnd().getEdges()) {
+                    if (!enqueEdge.getEnd().getVisited()) {
+                        prioEdgeQueue.add(new Edge(enqueEdge.getStart(), enqueEdge.getEnd(), enqueEdge.getWeight() + currentStartGraph.getTotalWeight()));
                     }
                 }
-            else{
+            } else {
                 if (currentEndGraph.getTotalWeight() > currentStartGraph.getTotalWeight() + connectingEdge.getWeight()) {
                     /**
                      * put Nodes and Edges from StartGraph into Endgraph
@@ -851,45 +959,107 @@ public class Graph {
         return hmNodeGraph.get(workingGraph.getNode(endNode.getIndex()));
     }
 
-    public Graph bellmanFordMoore(Node StartNode,Node end){
+    public Graph bellmanFordMoore(Node StartNode, Node end) {
         Graph result = new Graph();
 
         ArrayList<Double> distance = new ArrayList<>();
         ArrayList<Integer> prev = new ArrayList<>();
         this.unVisitNodes();
-        for(Node v:this.getNodes()){
+        for (Node v : this.getNodes()) {
             distance.add(v.getIndex(), Double.POSITIVE_INFINITY);
             prev.add(v.getIndex(), null);
         }
-        distance.set(StartNode.getIndex(),0.0);
-        prev.set(0,0);
-        for(int i = 0;i<this.getNodes().size()-1;++i){
-            for(Edge e:this.getEdges()){
-                if(distance.get(e.getStart().getIndex())+e.getWeight()<distance.get(e.getEnd().getIndex())){
-                    distance.set(e.getEnd().getIndex(),e.getWeight()+distance.get(e.getStart().getIndex()));
-                    prev.set(e.getEnd().getIndex(),e.getStart().getIndex());
+        distance.set(StartNode.getIndex(), 0.0);
+        prev.set(0, 0);
+        for (int i = 0; i < this.getNodes().size() - 1; ++i) {
+            for (Edge e : this.getEdges()) {
+                if (distance.get(e.getStart().getIndex()) + e.getWeight() < distance.get(e.getEnd().getIndex())) {
+                    distance.set(e.getEnd().getIndex(), e.getWeight() + distance.get(e.getStart().getIndex()));
+                    prev.set(e.getEnd().getIndex(), e.getStart().getIndex());
                 }
             }
         }
-        for(Edge e:this.getEdges()){
-            if(distance.get(e.getStart().getIndex())+e.getWeight()<distance.get(e.getEnd().getIndex())){
-                System.out.println("Zyklus gefunden:"+e+"\n");
+        for (Edge e : this.getEdges()) {
+            if (distance.get(e.getStart().getIndex()) + e.getWeight() < distance.get(e.getEnd().getIndex())) {
+                System.out.println("Zyklus gefunden:" + e + "\n");
                 result.addEdge(e);
                 return result;
             }
         }
 
         Node tmpNode = end;
-        while(tmpNode != StartNode){
+        while (tmpNode != StartNode) {
             result.addNode(tmpNode);
             Node nextNode = this.getNode(prev.get(tmpNode.getIndex()));
-            Edge connectingEdge = this.connect(tmpNode,nextNode);
+            Edge connectingEdge = this.connect(tmpNode, nextNode);
             result.addEdge(connectingEdge);
             result.addToTotalWeight(connectingEdge.getWeight());
             tmpNode = nextNode;
         }
         result.addNode(StartNode);
         return result;
+    }
+
+
+    public Graph fordFulkerson(Node source, Node target) {
+        //residualGraph
+        Graph residual = new Graph();
+
+        //result Graph
+        Graph result = new Graph();
+
+        //adding all Nodes
+        for (Node n : this.getNodes()) {
+            residual.addNode(new Node(n.getIndex()));
+            result.addNode(n);
+        }
+
+        //adding all edges
+        //Init Edges with Flow 0.0
+        for (Edge e : this.getEdges()) {
+            result.addEdge(new Edge(e.getStart(), e.getEnd(), e.getWeight(),0.0));
+            residual.addEdge(new Edge(residual.getNode(e.getStart().getIndex()), residual.getNode(e.getEnd().getIndex()),0.0));
+        }
+
+
+        //find augumanting path
+        Graph path = residual.findPath(source, target);
+
+        Double Flow = path.getTotalWeight();
+
+        for (int i=0;i<this.getEdges().size()|| path.getEdges().size() == 0;i++) {
+            // update residualgraph
+            result.computePath(residual,path);
+            path = residual.findPath(source, target);
+            Flow += path.getTotalWeight();
+        }
+
+        result.setFlow(Flow);
+
+        return result;
+    }
+
+    private void computePath(Graph residual,Graph path) {
+
+        for (Edge e : path.getEdges()) {
+            this.connect(e.getStart(),e.getEnd()).setFlow(path.getTotalWeight());
+            Edge reEdge;
+
+            if(null == this.connect(e.getEnd(),e.getStart())){
+                reEdge = e.reverse();
+                reEdge.setFlow(path.getTotalWeight());
+                reEdge.getStart().setWeight(e.getWeight());
+                this.addEdge(reEdge);
+            }
+            else{
+                reEdge = this.connect(e.getEnd(),e.getStart());
+                reEdge.setFlow(reEdge.getWeight()+path.getTotalWeight());
+            }
+            //this.connect(e.getStart(),e.getEnd()).setFlow(path.getTotalWeight());
+
+
+        }
+
     }
 
     private Graph removeUnusedEdges() {
@@ -904,6 +1074,7 @@ public class Graph {
             result.getNode(e.getStart().getIndex()).addEdge(newEdge);
             result.getNode(e.getEnd().getIndex()).addEdge(newEdge);
         }
+
 
         return result;
     }

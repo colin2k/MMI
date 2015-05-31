@@ -28,31 +28,20 @@ public class Program {
                     //"graphen/K_12e.txt"));
                     //"graphen/K_10.txt"));
             //"graphen/K_10e.txt"));
-            "graphen/G_1_2.txt"));
+            "graphen/Fluss.txt"));
 
             Graph g = new Graph(in, EDGE_LIST_WEIGHT,true);
 
             Node startNode = g.getNode(0);
-            Node endNode = g.getNode(1);
-
-
-
-            // Branch and Bound
+            Node endNode = g.getNode(7);
 
             double start = System.nanoTime();
-            //LinkedList<Graph> tspGraph = g.tspBruteForce(startNode, false);
-            Graph dijkstra = g.dijkstra(startNode, endNode);
-            Graph moore = g.bellmanFordMoore(startNode, endNode);
-
+            Graph result = g.fordFulkerson(startNode,endNode);
             double end = System.nanoTime();
             in.close();
 
-
-            System.out.println("\n\nDijkstra:"+startNode+','+endNode);
-            System.out.println(dijkstra);
-            System.out.println("Time: " + ((end - start) / 1000000000) + "s");
-            System.out.println("\n\nBellmanFordMoore:"+startNode+','+endNode);
-            System.out.println(moore);
+            System.out.println("\n\nResult:"+startNode+','+endNode);
+            System.out.println(result);
             System.out.println("Time: " + ((end - start) / 1000000000) + "s");
             // Error Handling...
         } catch (IOException e) {

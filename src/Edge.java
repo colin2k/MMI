@@ -13,8 +13,16 @@ public class Edge implements Comparable<Edge> {
     private Node start;
     private Node end;
     private Double weight = Double.NaN;
-    private Edge e1;
 
+    public Double getFlow() {
+        return flow;
+    }
+
+    public void setFlow(Double flow) {
+        this.flow = flow;
+    }
+
+    private Double flow;
     /**
      * Initialize Edge
      *
@@ -37,6 +45,22 @@ public class Edge implements Comparable<Edge> {
         this.start = i;
         this.end = j;
         this.weight = w;
+        this.flow = 0.0;
+    }
+
+    /**
+     * Initialize Edge
+     *
+     * @param i Node from
+     * @param j Node to
+     * @param w Double weight
+     * @param f Double flow
+     */
+    public Edge(Node i, Node j, Double w,Double f) {
+        this.start = i;
+        this.end = j;
+        this.weight = w;
+        this.flow = f;
     }
 
     /**
@@ -58,6 +82,7 @@ public class Edge implements Comparable<Edge> {
         return (this.weight == null) ? 0.0 : this.weight;
     }
 
+    public void setWeight(Double weight){this.weight = weight;}
     /**
      * get Start Node
      *
@@ -86,7 +111,8 @@ public class Edge implements Comparable<Edge> {
         if (this.weight != Double.NaN) {
             return "(" + String.valueOf(this.start) + ","
                     + String.valueOf(this.end) + ", "
-                    + String.valueOf(this.weight) + " )";
+                    + String.valueOf(this.weight) + " ,"
+                    + String.valueOf(this.flow) + " )";
         } else {
             return "(" + String.valueOf(this.start) + ","
                     + String.valueOf(this.end) + ")";
