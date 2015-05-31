@@ -135,9 +135,16 @@ public class Graph {
      */
     protected Edge connect(Node i, Node j) {
         for (Edge e : this.getEdges()) {
-            if ((e.getStart() == i && e.getEnd() == j) ||
-                    (e.getStart() == j && e.getEnd() == i)) {
-                return e;
+            if (this.directed) {
+                if ((e.getStart() == i && e.getEnd() == j)) {
+                    return e;
+
+                }
+            } else {
+                if ((e.getStart() == i && e.getEnd() == j) ||
+                        (e.getStart() == j && e.getEnd() == i)) {
+                    return e;
+                }
             }
         }
         return null;
@@ -311,8 +318,8 @@ public class Graph {
 
     private void removeEdge(Edge e) {
         this.edges.remove(e);
-        for(Node n :this.getNodes()){
-            if(n.getEdges().contains(e)){
+        for (Node n : this.getNodes()) {
+            if (n.getEdges().contains(e)) {
                 n.removeEdge(e);
             }
         }
@@ -480,7 +487,6 @@ public class Graph {
         }
         return bottleNeck;
     }
-
 
 
     /**
@@ -675,7 +681,7 @@ public class Graph {
     /**
      * Solving Traveling Sales Man Problem
      * - by trying all Tours (Brute Force Algorithm)
-     * <p>
+     * <p/>
      * - including Branch and Bound
      *
      * @param startNode Node
@@ -713,7 +719,7 @@ public class Graph {
     /**
      * Solving Traveling Sales Man Problem
      * - by trying all Tours (Brute Force Algorithm)
-     * <p>
+     * <p/>
      * - including Branch and Bound
      *
      * @param startNode    Node
@@ -935,6 +941,7 @@ public class Graph {
 
         //result Graph
         Graph result = new Graph();
+        result.setDirected(this.directed);
 
         //adding all Nodes to result Graph
         result.nodes = this.getNodes();
@@ -947,14 +954,39 @@ public class Graph {
         //residualGraph
         Graph residual = result.buildResidualGraph();
 
+        //residual source
+        Node rSource = residual.getNode(source.getIndex());
 
-        // while augumented path is found
-        while(residual.findPath(residual.getNode(source.getIndex()), residual.getNode(target.getIndex())));
+        //residual target
+        Node rTarget = residual.getNode(target.getIndex());
+
+
+        // while augumented path is found process in residual Graph
+        while (residual.findPath(rSource, rTarget)) ;
+
+        //set actual flow in result graph
+        for (Edge e : result.getEdges()) {
+            Node rStart = residual.getNode(e.getStart().getIndex());
+            Node rEnd = residual.getNode(e.getEnd().getIndex());
+            Edge tmpEdge = residual.connect(rStart, rEnd);
+            //if edge is not fully used, take current flow
+            if (tmpEdge != null) {
+                e.setFlow(tmpEdge.getFlow());
+            } else {
+                //if edge flow takes full capacity, take reverse edge from residual graph
+                tmpEdge = residual.connect(rEnd, rStart);
+                e.setFlow(tmpEdge.getWeight());
+            }
+        }
+        // set total flow
         result.setFlow(residual.getFlow());
+
         return result;
     }
-    private Graph buildResidualGraph(){
+
+    private Graph buildResidualGraph() {
         Graph residual = new Graph();
+        residual.setDirected(this.directed);
 
         //adding new Nodes
         for (Node n : this.getNodes()) {
@@ -965,12 +997,13 @@ public class Graph {
         for (Edge e : this.getEdges()) {
             Node rFrom = residual.getNode(e.getStart().getIndex());
             Node rTo = residual.getNode(e.getEnd().getIndex());
-            Edge rEdge =new Edge(rFrom, rTo,e.getWeight());
+            Edge rEdge = new Edge(rFrom, rTo, e.getWeight());
             residual.addEdge(rEdge);
             rFrom.addEdge(rEdge);
         }
         return residual;
     }
+
     private boolean findPath(Node start, Node end) {
         // Initialize result Graph and llNodes LinkedList of Nodes as Stack
         Graph result = new Graph();
@@ -1031,7 +1064,7 @@ public class Graph {
         while (start != end) {
             for (Edge e : result.getEdges()) {
                 if (e.getEnd() == end) {
-                    if(bottleneck>e.getWeight()){
+                    if (bottleneck > e.getWeight()) {
                         bottleneck = e.getWeight();
                     }
                     end = e.getStart();
@@ -1041,43 +1074,20 @@ public class Graph {
             }
         }
 
-        for(Edge e:path.getEdges()){
-            Edge rEdge = new Edge(e.getEnd(),e.getStart(),bottleneck);
+        for (Edge e : path.getEdges()) {
+            Edge rEdge = new Edge(e.getEnd(), e.getStart(), bottleneck);
             this.addEdge(rEdge);
             e.getEnd().addEdge(rEdge);
-            if(e.getWeight()-bottleneck > 0) {
+            if (e.getWeight() - bottleneck > 0) {
                 e.setWeight(e.getWeight() - bottleneck);
-            }
-            else{
+                e.setFlow(bottleneck + e.getFlow());
+            } else {
                 this.removeEdge(e);
                 e.getStart().removeEdge(e);
             }
         }
-        this.setFlow(this.getFlow()+bottleneck);
+        this.setFlow(this.getFlow() + bottleneck);
         return true;
-    }
-
-    private void computePath(Graph residual,Graph path) {
-
-        for (Edge e : path.getEdges()) {
-            this.connect(e.getStart(),e.getEnd()).setFlow(path.getTotalWeight());
-            Edge reEdge;
-
-            if(null == this.connect(e.getEnd(),e.getStart())){
-                reEdge = e.reverse();
-                reEdge.setFlow(path.getTotalWeight());
-                reEdge.getStart().setWeight(e.getWeight());
-                this.addEdge(reEdge);
-            }
-            else{
-                reEdge = this.connect(e.getEnd(),e.getStart());
-                reEdge.setFlow(reEdge.getWeight()+path.getTotalWeight());
-            }
-            //this.connect(e.getStart(),e.getEnd()).setFlow(path.getTotalWeight());
-
-
-        }
-
     }
 
     private Graph removeUnusedEdges() {
