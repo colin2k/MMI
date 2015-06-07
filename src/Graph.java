@@ -16,6 +16,7 @@ public class Graph {
     final static int AD_MATRIX = 0;
     final static int EDGE_LIST = 1;
     final static int EDGE_LIST_WEIGHT = 2;
+    final static int EDGE_LIST_BALANCED = 3;
 
     private List<Node> nodes;
     private List<Edge> edges;
@@ -161,6 +162,7 @@ public class Graph {
             result += n;
         }
         result += "]\nEdges:\n";
+        result += "Start,Ende,Kosten,Kapazität\n";
         for (Edge e : this.edges) {
             result += e + "\n";
         }
@@ -216,6 +218,9 @@ public class Graph {
             // reading Edges
             String currentLine;
 
+
+            int nodeCounter = 0;
+
             for (int currentNode = 0; (currentLine = source.readLine()) != null; currentNode++) {
                 // for each node in the current Line
                 if (fileType == AD_MATRIX) {
@@ -261,6 +266,37 @@ public class Graph {
                     Edge newEdge = new Edge(nodeFrom, nodeTo, Double.parseDouble(straBuf[2]));
                     if (!this.directed) {
                         Edge newEdgeReverse = new Edge(nodeTo, nodeFrom, Double.parseDouble(straBuf[2]));
+                        nodeFrom.addEdge(newEdgeReverse);
+                        nodeTo.addEdge(newEdgeReverse);
+                        this.addEdge(newEdgeReverse);
+                    }
+
+                    nodeTo.addEdge(newEdge);
+
+                    nodeFrom.addEdge(newEdge);
+
+                    this.addEdge(newEdge);
+
+                } else if (fileType == EDGE_LIST_BALANCED) {
+                    String[] straBuf = currentLine.split("\\s");
+
+
+                    //balance values
+                    if (nodeCounter < nodeCount) {
+                        Node bNode = this.nodes.get(nodeCounter);
+                        bNode.setBalance(Double.parseDouble(straBuf[0]));
+                        nodeCounter++;
+                        continue;
+                    }
+
+
+                    Node nodeFrom = this.nodes.get(Integer.parseInt(straBuf[0]));
+                    Node nodeTo = this.nodes.get(Integer.parseInt(straBuf[1]));
+
+                    Edge newEdge = new Edge(nodeFrom, nodeTo, Double.parseDouble(straBuf[2]), Double.parseDouble(straBuf[3]));
+
+                    if (!this.directed) {
+                        Edge newEdgeReverse = new Edge(nodeTo, nodeFrom, Double.parseDouble(straBuf[2]), Double.parseDouble(straBuf[3]));
                         nodeFrom.addEdge(newEdgeReverse);
                         nodeTo.addEdge(newEdgeReverse);
                         this.addEdge(newEdgeReverse);
@@ -681,7 +717,7 @@ public class Graph {
     /**
      * Solving Traveling Sales Man Problem
      * - by trying all Tours (Brute Force Algorithm)
-     * <p/>
+     * <p>
      * - including Branch and Bound
      *
      * @param startNode Node
@@ -719,7 +755,7 @@ public class Graph {
     /**
      * Solving Traveling Sales Man Problem
      * - by trying all Tours (Brute Force Algorithm)
-     * <p/>
+     * <p>
      * - including Branch and Bound
      *
      * @param startNode    Node
@@ -917,7 +953,19 @@ public class Graph {
         for (Edge e : this.getEdges()) {
             if (distance.get(e.getStart().getIndex()) + e.getWeight() < distance.get(e.getEnd().getIndex())) {
                 System.out.println("Zyklus gefunden:" + e + "\n");
-                result.addEdge(e);
+                //get Zyclus
+                this.unVisitNodes();
+                Node Start = e.getStart();
+                Node PrevNode  =this.getNode(prev.get(StartNode.getIndex()));
+                Node tmpNode;
+
+                while(Start != PrevNode)
+                {
+                    tmpNode = this.getNode(prev.get(PrevNode.getIndex()));
+                    result.addNode(PrevNode);
+                    result.addNode(tmpNode);
+                    result.addEdge(this.connect(tmpNode,PrevNode));
+                }
                 return result;
             }
         }
@@ -1088,6 +1136,44 @@ public class Graph {
         }
         this.setFlow(this.getFlow() + bottleneck);
         return true;
+    }
+
+    public Graph CCP() {
+
+        Graph result = new Graph();
+
+        Node superSink = new Node(this.getNodes().size(), 0.0);
+        Node superSource = new Node(this.getNodes().size() + 1, 0.0);
+
+        //preprocess nodes
+        for (Node n : this.getNodes()) {
+            result.addNode(n);
+            if (n.getBalance() > 0) {
+                Edge newEdge = new Edge(superSource, n, n.getBalance());
+                superSource.addEdge(newEdge);
+                result.addEdge(newEdge);
+                superSource.setBalance(n.getBalance() + superSource.getBalance());
+
+            } else if (n.getBalance() < 0) {
+                Edge newEdge = new Edge(superSink, n, 0.0,n.getBalance());
+                n.addEdge(newEdge);
+                superSink.addEdge(newEdge);
+                result.addEdge(newEdge);
+                superSink.setBalance(n.getBalance() + superSink.getBalance());
+            }
+        }
+
+
+        result.addNode(superSink);
+        result.addNode(superSource);
+
+        result.edges = this.edges;
+
+        Graph residual = result.buildResidualGraph();
+
+        return result.bellmanFordMoore(superSource,superSink);
+
+
     }
 
     private Graph removeUnusedEdges() {

@@ -16,15 +16,15 @@ public class Node implements Comparable<Node> {
     private boolean visited = false;
     private LinkedList<Edge> edges;
 
-    public Double getWeight() {
-        return weight;
+    public Double getBalance() {
+        return balance;
     }
 
-    public void setWeight(Double weight) {
-        this.weight = weight;
+    public void setBalance(Double balance) {
+        this.balance = balance;
     }
 
-    private Double weight;
+    private Double balance;
     /**
      * Construct for Node
      *
@@ -34,10 +34,10 @@ public class Node implements Comparable<Node> {
         this.edges = new LinkedList<>();
         this.index = index;
     }
-    public Node(int index,Double weight){
+    public Node(int index,Double balance){
         this.edges = new LinkedList<>();
         this.index = index;
-        this.weight = weight;
+        this.balance = balance;
     }
 
     public boolean equals(Node n) {
@@ -51,7 +51,7 @@ public class Node implements Comparable<Node> {
      * @return int
      */
     public int compareTo(Node n) {
-        return Double.compare(this.weight, n.weight);
+        return Double.compare(this.balance, n.balance);
     }
     /**
      * visit Node

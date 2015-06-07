@@ -16,6 +16,7 @@ public class Program {
     final static int AD_MATRIX = 0;
     final static int EDGE_LIST = 1;
     final static int EDGE_LIST_WEIGHT = 2;
+    final static int EDGE_LIST_BALANCED = 3;
 
     public static void main(String[] args) {
 
@@ -28,19 +29,16 @@ public class Program {
                     //"graphen/K_12e.txt"));
                     //"graphen/K_10.txt"));
             //"graphen/K_10e.txt"));
-            "graphen/Fluss.txt"));
+            "graphen/Kostenminimal1.txt"));
 
-            Graph g = new Graph(in, EDGE_LIST_WEIGHT,true);
+            Graph g = new Graph(in, EDGE_LIST_BALANCED,true);
 
-            Node startNode = g.getNode(0);
-            Node endNode = g.getNode(7);
 
             double start = System.nanoTime();
-            Graph result = g.fordFulkerson(startNode,endNode);
+            Graph result = g.CCP();
             double end = System.nanoTime();
             in.close();
 
-            System.out.println("\n\nResult:"+startNode+','+endNode);
             System.out.println(result);
             System.out.println("Time: " + ((end - start) / 1000000000) + "s");
             // Error Handling...

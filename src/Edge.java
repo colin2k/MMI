@@ -2,9 +2,9 @@
  * GraphenBibliothek
  *
  * @author Oliver Colin Sauer
- *         <p/>
+ *         <p>
  *         MIS
- *         <p/>
+ *         <p>
  *         Class Edge
  */
 
@@ -23,6 +23,28 @@ public class Edge implements Comparable<Edge> {
     }
 
     private Double flow;
+
+    private Double cost;
+
+    public Double getCapacity() {
+        return capacity;
+    }
+
+    public void setCapacity(Double capacity) {
+        this.capacity = capacity;
+    }
+
+    public Double getCost() {
+        return cost;
+    }
+
+    public void setCost(Double cost) {
+        this.cost = cost;
+    }
+
+    private Double capacity;
+
+
     /**
      * Initialize Edge
      *
@@ -48,19 +70,22 @@ public class Edge implements Comparable<Edge> {
         this.flow = 0.0;
     }
 
+
     /**
      * Initialize Edge
      *
      * @param i Node from
      * @param j Node to
-     * @param w Double weight
-     * @param f Double flow
+     * @param c Double costs
+     * @param u Double capacity
      */
-    public Edge(Node i, Node j, Double w,Double f) {
+    public Edge(Node i, Node j, Double c, Double u) {
         this.start = i;
         this.end = j;
-        this.weight = w;
-        this.flow = f;
+        this.capacity= u;
+        this.weight = u;
+        this.cost = c;
+        this.flow = 0.0;
     }
 
     /**
@@ -82,7 +107,10 @@ public class Edge implements Comparable<Edge> {
         return (this.weight == null) ? 0.0 : this.weight;
     }
 
-    public void setWeight(Double weight){this.weight = weight;}
+    public void setWeight(Double weight) {
+        this.weight = weight;
+    }
+
     /**
      * get Start Node
      *
@@ -111,8 +139,8 @@ public class Edge implements Comparable<Edge> {
         if (this.weight != Double.NaN) {
             return "(" + String.valueOf(this.start) + ","
                     + String.valueOf(this.end) + ", "
-                    + String.valueOf(this.weight) + " ,"
-                    + String.valueOf(this.flow) + " )";
+                    + String.valueOf(this.cost) + " ,"
+                    + String.valueOf(this.capacity) + " )";
         } else {
             return "(" + String.valueOf(this.start) + ","
                     + String.valueOf(this.end) + ")";
