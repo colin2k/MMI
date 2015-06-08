@@ -982,6 +982,7 @@ public class Graph {
         LinkedList<Node> llNode = new LinkedList<>();
         llNode.addAll(this.getNodes());
         Node currentNode;
+
         do {
             currentNode = llNode.remove();
             currentNode.visit();
@@ -1016,12 +1017,12 @@ public class Graph {
                         if (connection.getCapacity() < result.getFlow()) {
                             result.setFlow(connection.getCapacity());
                         }
-
                     }
                     return result;
                 }
             }
         } while (!this.checkAllVisited());
+
         if (distance.get(end.getIndex()) == Double.POSITIVE_INFINITY || returnCycle) {
             return null;
         }
@@ -1086,12 +1087,12 @@ public class Graph {
                 e.setFlow(tmpEdge.getFlow());
             } else {
                 //if edge flow takes full capacity, take reverse edge from residual graph
-                tmpEdge = residual.connect(rEnd,rStart);
 
                 //problem ??
-                e.setFlow(tmpEdge.getCapacity());
+                //tmpEdge = residual.connect(rEnd,rStart);
+                //e.setFlow(tmpEdge.getCapacity());
 
-                //e.setFlow(e.getCapacity());
+                e.setFlow(e.getCapacity());
             }
         }
 
@@ -1212,12 +1213,6 @@ public class Graph {
             Edge rEdge;
             if ((rEdge = this.connect(e.getEnd(), e.getStart())) != null) {
                 rEdge.setCapacity(rEdge.getCapacity() + bottleneck);
-                if ((e.getCapacity() - bottleneck) != 0.0) {
-                    e.setCapacity(e.getCapacity() - bottleneck);
-                } else {
-                    e.getStart().removeEdge(e);
-                    this.removeEdge(e);
-                }
             } else {
                 rEdge = new Edge(e.getEnd(), e.getStart(), bottleneck);
                 this.addEdge(rEdge);
