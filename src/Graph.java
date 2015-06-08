@@ -62,7 +62,6 @@ public class Graph {
         this.totalWeight = 0.0;
         this.flow = 0.0;
         this.cost = 0.0;
-
     }
 
     /**
@@ -154,7 +153,6 @@ public class Graph {
         }
     }
 
-
     /**
      * Connecting to Nodes with matching edge or new Edge
      *
@@ -225,6 +223,49 @@ public class Graph {
      */
     public List<Node> getNodes() {
         return this.nodes;
+    }
+
+    /**
+     * add Node to Graph
+     *
+     * @param n Node
+     */
+    private void addNode(Node n) {
+        this.nodes.add(n);
+    }
+
+    /**
+     * get a Node from Graph by Index
+     *
+     * @param index Integer
+     * @return Node
+     */
+    public Node getNode(int index) {
+        for (Node n : this.nodes) {
+            if (n.getIndex() == index) {
+                return n;
+            }
+        }
+        return this.nodes.get(index);
+    }
+
+    /**
+     * add Edge to Graph
+     *
+     * @param e Edge
+     */
+    private void addEdge(Edge e) {
+        this.edges.add(e);
+    }
+
+    private void removeEdge(Edge e) {
+        this.edges.remove(e);
+        for (Node n : this.getNodes()) {
+            if (n.getEdges().contains(e)) {
+                n.removeEdge(e);
+            }
+        }
+
     }
 
     /**
@@ -345,50 +386,6 @@ public class Graph {
         } catch (IOException e) {
             System.out.println("Fehler beim einlesen.");
         }
-    }
-
-
-    /**
-     * add Node to Graph
-     *
-     * @param n Node
-     */
-    private void addNode(Node n) {
-        this.nodes.add(n);
-    }
-
-    /**
-     * get a Node from Graph by Index
-     *
-     * @param index Integer
-     * @return Node
-     */
-    public Node getNode(int index) {
-        for (Node n : this.nodes) {
-            if (n.getIndex() == index) {
-                return n;
-            }
-        }
-        return this.nodes.get(index);
-    }
-
-    /**
-     * add Edge to Graph
-     *
-     * @param e Edge
-     */
-    private void addEdge(Edge e) {
-        this.edges.add(e);
-    }
-
-    private void removeEdge(Edge e) {
-        this.edges.remove(e);
-        for (Node n : this.getNodes()) {
-            if (n.getEdges().contains(e)) {
-                n.removeEdge(e);
-            }
-        }
-
     }
 
     /**
@@ -1002,12 +999,22 @@ public class Graph {
                 if (distance.get(e.getStart().getIndex()) + e.getCost() < distance.get(e.getEnd().getIndex())) {
                     //System.out.println("Zyklus gefunden:" + e + "\n");
 
+
                     //get Cycle
                     this.unVisitNodes();
                     Node Start = e.getStart();
                     Node PrevNode = this.getNode(prev.get(Start.getIndex()));
 
+                    //go back inside the cycle
+                    while (!Start.getVisited()) {
+                        Start.visit();
+                        Start = PrevNode;
+                        PrevNode = this.getNode(prev.get(PrevNode.getIndex()));
+                    }
+
+                    this.unVisitNodes();
                     result.setFlow(Double.POSITIVE_INFINITY);
+                    //extract cycle
                     while (!Start.getVisited()) {
                         Start.visit();
                         Edge connection = this.connect(PrevNode, Start);
@@ -1047,7 +1054,6 @@ public class Graph {
         return result;
     }
 
-
     public Graph fordFulkerson(Node source, Node target) {
 
 
@@ -1074,6 +1080,7 @@ public class Graph {
 
 
         // while augumented path is found process in residual Graph
+        //noinspection StatementWithEmptyBody
         while (residual.findPath(rSource, rTarget)) ;
 
         //set actual flow in result graph
@@ -1293,17 +1300,22 @@ public class Graph {
                 } else {
                     connecting.setFlow(connecting.getFlow() + cycle.getFlow());
                 }
-                residual = result.buildResidualGraph();
-                rSuperSource = residual.getNode(superSource.getIndex());
-                rSuperSink = residual.getNode(superSink.getIndex());
+
             }
+            residual = result.buildResidualGraph();
+            rSuperSource = residual.getNode(superSource.getIndex());
+            rSuperSink = residual.getNode(superSink.getIndex());
 
         }
+
 
         return result;
 
 
     }
+
+
+    public Graph SSP(){return new Graph();}
 
     private Graph removeUnusedEdges() {
         Graph result = new Graph();
@@ -1321,6 +1333,5 @@ public class Graph {
 
         return result;
     }
-
 
 }
