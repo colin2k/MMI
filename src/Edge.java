@@ -31,7 +31,7 @@ public class Edge implements Comparable<Edge> {
     }
 
     public void setCapacity(Double capacity) {
-        this.capacity = capacity;
+        this.capacity = capacity;this.weight=capacity;
     }
 
     public Double getCost() {

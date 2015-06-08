@@ -24,16 +24,18 @@ public class Program {
 
             // reading file
             BufferedReader in = new BufferedReader(new FileReader(
-                    //"graphen/K_12.txt"));
-                    //"graphen/K_12e.txt"));
-                    //"graphen/K_10.txt"));
-            //"graphen/K_10e.txt"));
-            "graphen/Kostenminimal1.txt"));
+                    //"graphen/G_1_2.txt"
+                    //"graphen/Fluss.txt"
+            "graphen/Kostenminimal5.txt"
+            ));
 
+            //Graph g = new Graph(in, EDGE_LIST_WEIGHT,true);
             Graph g = new Graph(in, EDGE_LIST_BALANCED,true);
-
+            //Node startNode = g.getNode(0);
+            //Node endNode = g.getNode(7);
 
             double start = System.nanoTime();
+            //Graph result = g.fordFulkerson(startNode,endNode);
             Graph result = g.CCA();
             double end = System.nanoTime();
             in.close();

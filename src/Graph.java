@@ -25,11 +25,15 @@ public class Graph {
     private Double flow;
 
     public Double getCost() {
-        if(this.cost.equals(0.0)){
-            for(Edge e:this.getEdges()){
-                cost += e.getCost()*e.getFlow();
+
+        if (cost == 0.0)
+            for (Edge e : this.getEdges()) {
+                if (e.getCost() != null) {
+                    cost += e.getCost() * e.getFlow();
+                } else {
+                    return cost;
+                }
             }
-        }
         return cost;
     }
 
@@ -116,9 +120,9 @@ public class Graph {
 
     public Double getFlow() {
         Double max = 0.0;
-        if(this.flow.equals(0.0)){
-            for(Edge e:this.getEdges()){
-                if(e.getFlow()>max)
+        if (this.flow.equals(0.0)) {
+            for (Edge e : this.getEdges()) {
+                if (e.getFlow() > max)
                     max = e.getFlow();
             }
             return max;
@@ -742,7 +746,7 @@ public class Graph {
     /**
      * Solving Traveling Sales Man Problem
      * - by trying all Tours (Brute Force Algorithm)
-     * <p>
+     * <p/>
      * - including Branch and Bound
      *
      * @param startNode Node
@@ -780,7 +784,7 @@ public class Graph {
     /**
      * Solving Traveling Sales Man Problem
      * - by trying all Tours (Brute Force Algorithm)
-     * <p>
+     * <p/>
      * - including Branch and Bound
      *
      * @param startNode    Node
@@ -955,14 +959,15 @@ public class Graph {
         return hmNodeGraph.get(workingGraph.getNode(endNode.getIndex()));
     }
 
-    private boolean checkAllVisited(){
-        for(Node n:this.getNodes()){
-            if(!n.getVisited())
+    private boolean checkAllVisited() {
+        for (Node n : this.getNodes()) {
+            if (!n.getVisited())
                 return false;
         }
         return true;
     }
-    public Graph bellmanFordMoore(Node StartNode, Node end,boolean returnCycle) {
+
+    public Graph bellmanFordMoore(Node StartNode, Node end, boolean returnCycle) {
         Graph result = new Graph();
 
         ArrayList<Double> distance = new ArrayList<>();
@@ -994,7 +999,7 @@ public class Graph {
             }
             for (Edge e : this.getEdges()) {
                 if (distance.get(e.getStart().getIndex()) + e.getCost() < distance.get(e.getEnd().getIndex())) {
-                    System.out.println("Zyklus gefunden:" + e + "\n");
+                    //System.out.println("Zyklus gefunden:" + e + "\n");
 
                     //get Cycle
                     this.unVisitNodes();
@@ -1016,8 +1021,8 @@ public class Graph {
                     return result;
                 }
             }
-        }while(!this.checkAllVisited());
-        if(distance.get(end.getIndex()) == Double.POSITIVE_INFINITY || returnCycle){
+        } while (!this.checkAllVisited());
+        if (distance.get(end.getIndex()) == Double.POSITIVE_INFINITY || returnCycle) {
             return null;
         }
 
@@ -1032,8 +1037,8 @@ public class Graph {
         }
         result.addNode(StartNode);
         Double flow = Double.POSITIVE_INFINITY;
-        for(Edge e:result.getEdges()){
-            if(e.getCapacity()<flow){
+        for (Edge e : result.getEdges()) {
+            if (e.getCapacity() < flow) {
                 flow = e.getCapacity();
             }
         }
@@ -1075,22 +1080,30 @@ public class Graph {
             Node rStart = residual.getNode(e.getStart().getIndex());
             Node rEnd = residual.getNode(e.getEnd().getIndex());
             Edge tmpEdge = residual.connect(rStart, rEnd);
+
             //if edge is not fully used, take current flow
             if (tmpEdge != null) {
-                e.setFlow(tmpEdge.getFlow()+e.getFlow());
+                e.setFlow(tmpEdge.getFlow());
             } else {
                 //if edge flow takes full capacity, take reverse edge from residual graph
-                tmpEdge = residual.connect(rEnd, rStart);
+                tmpEdge = residual.connect(rEnd,rStart);
+
+                //problem ??
                 e.setFlow(tmpEdge.getCapacity());
+
+                //e.setFlow(e.getCapacity());
             }
         }
-        // set total flow
-        result.setFlow(residual.getFlow());
 
+        flow = 0.0;
+        for (Edge e : source.getEdges()) {
+            flow += e.getFlow();
+        }
+        result.setFlow(flow);
         return result;
     }
 
-    private Graph  buildResidualGraph() {
+    private Graph buildResidualGraph() {
         Graph residual = new Graph();
         residual.setDirected(this.directed);
 
@@ -1103,23 +1116,21 @@ public class Graph {
         for (Edge e : this.getEdges()) {
             Node rFrom = residual.getNode(e.getStart().getIndex());
             Node rTo = residual.getNode(e.getEnd().getIndex());
-            if(e.getFlow() == 0.0){
-                Edge rEdge = new Edge(rFrom, rTo, e.getCost(),e.getCapacity());
+            if (e.getFlow() == 0.0) {
+                Edge rEdge = new Edge(rFrom, rTo, e.getCost(), e.getCapacity());
                 residual.addEdge(rEdge);
                 rFrom.addEdge(rEdge);
-            }
-            else if(e.getFlow()<e.getCapacity()){
-                Edge rEdge = new Edge(rTo, rFrom, (e.getCost()*-1 ==0.0)?0.0:e.getCost()*-1,e.getFlow());
+            } else if (e.getFlow() < e.getCapacity()) {
+                Edge rEdge = new Edge(rTo, rFrom, (e.getCost() * -1 == 0.0) ? 0.0 : e.getCost() * -1, e.getFlow());
                 residual.addEdge(rEdge);
                 rTo.addEdge(rEdge);
-                Edge edge = new Edge(rFrom, rTo, e.getCost(),e.getFlow());
+                Edge edge = new Edge(rFrom, rTo, e.getCost(), e.getFlow());
                 residual.addEdge(edge);
                 rFrom.addEdge(edge);
-                residual.setCost(residual.getCost()+e.getCost()*e.getFlow());
-                residual.setFlow(residual.getFlow()+e.getFlow());
-            }
-            else{
-                Edge rEdge = new Edge(rTo, rFrom, (e.getCost()*-1 ==0.0)?0.0:e.getCost()*-1,e.getFlow());
+                residual.setCost(residual.getCost() + e.getCost() * e.getFlow());
+                residual.setFlow(residual.getFlow() + e.getFlow());
+            } else {
+                Edge rEdge = new Edge(rTo, rFrom, (e.getCost() * -1 == 0.0) ? 0.0 : e.getCost() * -1, e.getFlow());
                 residual.addEdge(rEdge);
                 rTo.addEdge(rEdge);
             }
@@ -1173,25 +1184,24 @@ public class Graph {
                     if (currentEdge.getEnd() == end) {
                         llNodes.clear();
                         break;
-
                     }
                 }
             }
         }
         if (!result.getNodes().contains(end)) {
             return false;
-
         }
 
         Graph path = new Graph();
         //update residual Graph
-        while (start != end) {
+        Node tmpEnd = end;
+        while (start != tmpEnd) {
             for (Edge e : result.getEdges()) {
-                if (e.getEnd() == end) {
+                if (e.getEnd() == tmpEnd) {
                     if (bottleneck > e.getCapacity()) {
                         bottleneck = e.getCapacity();
                     }
-                    end = e.getStart();
+                    tmpEnd = e.getStart();
                     path.addEdge(e);
                     break;
                 }
@@ -1200,25 +1210,22 @@ public class Graph {
 
         for (Edge e : path.getEdges()) {
             Edge rEdge;
-            if(this.connect(e.getEnd(),e.getStart()) != null){
-                rEdge = this.connect(e.getEnd(),e.getStart());
+            if ((rEdge = this.connect(e.getEnd(), e.getStart())) != null) {
                 rEdge.setCapacity(rEdge.getCapacity() + bottleneck);
-                if(e.getCapacity()-bottleneck != 0.0){
-                    e.setCapacity(e.getCapacity()-bottleneck);
-                }
-                else{
+                if ((e.getCapacity() - bottleneck) != 0.0) {
+                    e.setCapacity(e.getCapacity() - bottleneck);
+                } else {
                     e.getStart().removeEdge(e);
                     this.removeEdge(e);
                 }
-            }
-            else {
+            } else {
                 rEdge = new Edge(e.getEnd(), e.getStart(), bottleneck);
                 this.addEdge(rEdge);
             }
 
             e.getEnd().addEdge(rEdge);
             if (e.getCapacity() - bottleneck > 0) {
-                e.setCapacity(e.getWeight() - bottleneck);
+                e.setCapacity(e.getCapacity() - bottleneck);
                 e.setFlow(bottleneck + e.getFlow());
             } else {
                 this.removeEdge(e);
@@ -1232,24 +1239,23 @@ public class Graph {
     public Graph CCA() {
 
         Graph result = new Graph();
-        Graph SuperResult = new Graph();
         result.edges = this.edges;
         result.setDirected(this.directed);
 
         Node superSource = new Node(this.getNodes().size(), 0.0);
-        Node superSink = new Node(this.getNodes().size()+1, 0.0);
+        Node superSink = new Node(this.getNodes().size() + 1, 0.0);
 
         //preprocess nodes
         for (Node n : this.getNodes()) {
             result.addNode(n);
             if (n.getBalance() > 0) {
-                Edge newEdge = new Edge(superSource, n,0.0,n.getBalance());
+                Edge newEdge = new Edge(superSource, n, 0.0, n.getBalance());
                 superSource.addEdge(newEdge);
                 result.addEdge(newEdge);
                 superSource.setBalance(n.getBalance() + superSource.getBalance());
 
             } else if (n.getBalance() < 0) {
-                Edge newEdge = new Edge(n,superSink, 0.0,n.getBalance()*-1);
+                Edge newEdge = new Edge(n, superSink, 0.0, n.getBalance() * -1);
                 n.addEdge(newEdge);
                 superSink.addEdge(newEdge);
                 result.addEdge(newEdge);
@@ -1263,10 +1269,10 @@ public class Graph {
 
         result.fordFulkerson(superSource, superSink);
         Double flow = 0.0;
-        for(Edge e:superSource.getEdges()){
+        for (Edge e : superSource.getEdges()) {
             flow += e.getFlow();
         }
-        if(!superSource.getBalance().equals(flow) || (superSink.getBalance()*-1 != superSource.getBalance())){
+        if (!superSource.getBalance().equals(flow) || !(superSink.getBalance() * -1 == superSource.getBalance())) {
             System.out.println("b-Fluss nicht möglich, da Netzwerk zu klein");
             return null;
         }
@@ -1279,19 +1285,18 @@ public class Graph {
 
         // optimize flow
         Graph cycle;
-        while((cycle = residual.bellmanFordMoore(rSuperSource,rSuperSink,true)) != null){
+        while ((cycle = residual.bellmanFordMoore(rSuperSource, rSuperSink, true)) != null) {
 
-            for(Edge e:cycle.getEdges()){
+            for (Edge e : cycle.getEdges()) {
 
-                Edge connecting = result.connect(result.getNode(e.getStart().getIndex()),result.getNode(e.getEnd().getIndex()));
+                Edge connecting = result.connect(result.getNode(e.getStart().getIndex()), result.getNode(e.getEnd().getIndex()));
 
-                if(connecting == null){
+                if (connecting == null) {
                     //reverse
                     connecting = result.connect(result.getNode(e.getEnd().getIndex()), result.getNode(e.getStart().getIndex()));
-                    connecting.setFlow(connecting.getFlow()-cycle.getFlow());
-                }
-                else{
-                    connecting.setFlow(connecting.getFlow()+cycle.getFlow());
+                    connecting.setFlow(connecting.getFlow() - cycle.getFlow());
+                } else {
+                    connecting.setFlow(connecting.getFlow() + cycle.getFlow());
                 }
                 residual = result.buildResidualGraph();
                 rSuperSource = residual.getNode(superSource.getIndex());
@@ -1303,61 +1308,6 @@ public class Graph {
         return result;
 
 
-    }
-    private Graph initBflow(Node source, Node sink) {
-        //initial B-flow
-        Graph path;
-        while ((path = this.bellmanFordMoore(source, sink,true)) != null)
-        {
-            if(path.getNodes().size()==0){
-                // Cycle found
-                // Find min Capacity
-                Double minCapacity = Double.POSITIVE_INFINITY;
-                for(Edge e:path.getEdges()){
-                    if(e!= null && e.getCapacity()<minCapacity){
-                        minCapacity = e.getCapacity();
-                    }
-                }
-                for(Edge e:path.getEdges()){
-                    if(e == null)continue;
-                    Edge connectingEdge = this.connect(e.getStart(), e.getEnd());
-
-                    if(connectingEdge.getCapacity()-minCapacity == 0){
-                        this.removeEdge(connectingEdge);
-                    }
-                    else{
-                        connectingEdge.setCapacity(connectingEdge.getCapacity()-minCapacity);
-                    }
-
-                    this.setCost(this.getCost()+(connectingEdge.getCost()*minCapacity));
-                }
-                continue;
-            }
-
-            Double BottleNeck = path.findBottelneck(path);
-            //update residualGraph
-            for (Edge e : path.getEdges()) {
-                Edge connectingEdge = this.connect(e.getStart(), e.getEnd());
-                this.setCost(this.getCost() + connectingEdge.getCost()*BottleNeck);
-                if (connectingEdge.getCapacity().equals(BottleNeck)) {
-                    this.removeEdge(connectingEdge);
-                } else {
-                    connectingEdge.setCapacity(connectingEdge.getCapacity() - BottleNeck);
-                    connectingEdge.setWeight(connectingEdge.getWeight() - BottleNeck);
-                }
-                Edge ReverseConnectingEdge = this.connect(e.getEnd(), e.getStart());
-                if (ReverseConnectingEdge == null) {
-                    Edge newReverseEdge = new Edge(e.getEnd(), e.getStart(), (connectingEdge.getCost() * -1 != 0.0)?(connectingEdge.getCost() * -1):0.0,BottleNeck);
-                    e.getEnd().addEdge(newReverseEdge);
-                    this.addEdge(newReverseEdge);
-                } else {
-                    ReverseConnectingEdge.setCapacity(ReverseConnectingEdge.getCapacity() + BottleNeck);
-                    ReverseConnectingEdge.setWeight(ReverseConnectingEdge.getWeight() + BottleNeck);
-                }
-            }
-            this.setFlow(this.getFlow() + BottleNeck);
-        }
-        return this;
     }
 
     private Graph removeUnusedEdges() {
