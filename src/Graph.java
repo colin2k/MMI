@@ -1280,7 +1280,7 @@ public class Graph {
             flow += e.getFlow();
         }
         if (!superSource.getBalance().equals(flow) || !(superSink.getBalance() * -1 == superSource.getBalance())) {
-            System.out.println("b-Fluss nicht möglich, da Netzwerk zu klein");
+            System.out.println("b-Fluss nicht mï¿½glich, da Netzwerk zu klein");
             return null;
         }
 
@@ -1363,7 +1363,7 @@ public class Graph {
             }
 
             Graph shortestPath = residualGraph.getShortestPath(sources, sinks);
-            if (shortestPath == null) break;
+            //if (shortestPath == null) break;
 
             //find bottleneck
             Double bottleNeck = shortestPath.findBottelneckWithBalance(shortestPath);
@@ -1383,6 +1383,8 @@ public class Graph {
                         rEdge.setCapacity(rEdge.getCapacity() + bottleNeck);
 
                 }
+                e.getStart().setBalance(e.getStart().getBalance()-bottleNeck);
+                e.getEnd().setBalance(e.getEnd().getBalance()+bottleNeck);
                 if(e.getCapacity()-bottleNeck == 0){
                     e.getStart().removeEdge(e);
                     residualGraph.removeEdge(e);
@@ -1395,10 +1397,11 @@ public class Graph {
                     resultStart.setBalance(resultStart.getBalance() - bottleNeck);
                     resultEnd.setBalance(resultEnd.getBalance() + bottleNeck);
                     resultEdge.setFlow(resultEdge.getFlow() + bottleNeck);
+                    result.setFlow(result.getFlow()+bottleNeck);
                 } else {
                     resultEdge = result.connect(resultEnd, resultStart);
-                    resultStart.setBalance(resultStart.getBalance() + bottleNeck);
-                    resultEnd.setBalance(resultEnd.getBalance() - bottleNeck);
+                    resultStart.setBalance(resultStart.getBalance() - bottleNeck);
+                    resultEnd.setBalance(resultEnd.getBalance() + bottleNeck);
                     resultEdge.setFlow(resultEdge.getFlow() - bottleNeck);
                 }
             }
