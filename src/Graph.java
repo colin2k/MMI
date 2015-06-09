@@ -550,6 +550,21 @@ public class Graph {
         return bottleNeck;
     }
 
+    public Double findBottelneckWithBalance(Graph g) {
+        Double bottleNeck = Double.POSITIVE_INFINITY;
+        for (Edge e : g.getEdges()) {
+            if (e.getWeight() < bottleNeck)
+                bottleNeck = e.getWeight();
+        }
+        for (Node n : g.getNodes()) {
+            if (n.getBalance() > 0 && n.getBalance() < bottleNeck)
+                bottleNeck = n.getBalance();
+            if (n.getBalance() < 0 && n.getBalance() * -1 < bottleNeck)
+                bottleNeck = n.getBalance() * -1;
+        }
+        return bottleNeck;
+    }
+
 
     /**
      * Minimal Spanning tree (Prim-Algorithm)
@@ -1040,7 +1055,7 @@ public class Graph {
             Node nextNode = this.getNode(prev.get(tmpNode.getIndex()));
             Edge connectingEdge = this.connect(nextNode, tmpNode);
             result.addEdge(connectingEdge);
-            result.addToTotalWeight(connectingEdge.getCost());
+            result.addToTotalWeight(connectingEdge.getWeight());
             tmpNode = nextNode;
         }
         result.addNode(StartNode);
@@ -1090,17 +1105,7 @@ public class Graph {
             Edge tmpEdge = residual.connect(rStart, rEnd);
 
             //if edge is not fully used, take current flow
-            if (tmpEdge != null) {
-                e.setFlow(tmpEdge.getFlow());
-            } else {
-                //if edge flow takes full capacity, take reverse edge from residual graph
-
-                //problem ??
-                //tmpEdge = residual.connect(rEnd,rStart);
-                //e.setFlow(tmpEdge.getCapacity());
-
-                e.setFlow(e.getCapacity());
-            }
+            e.setFlow((tmpEdge != null) ? tmpEdge.getFlow() : e.getCapacity());
         }
 
         flow = 0.0;
@@ -1117,7 +1122,7 @@ public class Graph {
 
         //adding new Nodes
         for (Node n : this.getNodes()) {
-            residual.addNode(new Node(n.getIndex()));
+            residual.addNode(new Node(n.getIndex(), n.getBalance()));
         }
 
         //Create residual graph edges
@@ -1314,8 +1319,105 @@ public class Graph {
 
     }
 
+    private boolean isBalanced() {
+        for (Node n : this.getNodes()) {
+            if (!n.getBalance().equals(0.0)) {
+                return false;
+            }
+        }
+        return true;
+    }
 
-    public Graph SSP(){return new Graph();}
+    public Graph SSP() {
+        Graph result = new Graph();
+
+        result.setDirected(this.directed);
+        result.nodes = this.nodes;
+
+        // prepare Graph
+        // use all negative Edges
+        for (Edge e : this.getEdges()) {
+            //to use dijkstra for shortest path
+            e.setWeight(e.getCost());
+
+            if (e.getCost() < 0) {
+                e.setFlow(e.getCapacity());
+                //updating Balance in start and end
+                e.getStart().setBalance(e.getStart().getBalance() - e.getCapacity());
+                e.getEnd().setBalance(e.getEnd().getBalance() + e.getCapacity());
+            }
+            result.addEdge(e);
+        }
+
+        Graph residualGraph = result.buildResidualGraph();
+        while (!result.isBalanced()) {
+
+
+            //find source and sink
+            LinkedList<Node> sources = new LinkedList<>();
+            LinkedList<Node> sinks = new LinkedList<>();
+
+            for (Node n : residualGraph.getNodes()) {
+                if (n.getBalance() > 0) sources.add(n);
+                if (n.getBalance() < 0) sinks.add(n);
+            }
+
+            Graph shortestPath = residualGraph.getShortestPath(sources, sinks);
+            if (shortestPath == null) break;
+
+            //find bottleneck
+            Double bottleNeck = shortestPath.findBottelneckWithBalance(shortestPath);
+
+
+            for (Edge e : shortestPath.getEdges()) {
+                Node resultStart = result.getNode(e.getStart().getIndex());
+                Node resultEnd = result.getNode(e.getEnd().getIndex());
+                Edge resultEdge = result.connect(resultStart, resultEnd);
+
+
+                Edge rEdge = residualGraph.connect(e.getEnd(), e.getStart());
+                if (rEdge == null) {
+                    rEdge = new Edge(e.getEnd(), e.getStart(), bottleNeck);
+                    residualGraph.addEdge(rEdge);
+                } else {
+                        rEdge.setCapacity(rEdge.getCapacity() + bottleNeck);
+
+                }
+                if(e.getCapacity()-bottleNeck == 0){
+                    e.getStart().removeEdge(e);
+                    residualGraph.removeEdge(e);
+                }
+                else{
+                    e.setCapacity(e.getCapacity()-bottleNeck);
+                }
+                //update result Graph
+                if (resultEdge != null) {
+                    resultStart.setBalance(resultStart.getBalance() - bottleNeck);
+                    resultEnd.setBalance(resultEnd.getBalance() + bottleNeck);
+                    resultEdge.setFlow(resultEdge.getFlow() + bottleNeck);
+                } else {
+                    resultEdge = result.connect(resultEnd, resultStart);
+                    resultStart.setBalance(resultStart.getBalance() + bottleNeck);
+                    resultEnd.setBalance(resultEnd.getBalance() - bottleNeck);
+                    resultEdge.setFlow(resultEdge.getFlow() - bottleNeck);
+                }
+            }
+        }
+        return result;
+    }
+
+    private Graph getShortestPath(LinkedList<Node> sources, LinkedList<Node> sinks) {
+        Graph shortestPath;
+        for (Node source : sources) {
+            for (Node sink : sinks) {
+                shortestPath = this.dijkstra(source, sink);
+                if (shortestPath.getEdges().size() > 0)
+                    return shortestPath;
+            }
+        }
+        return null;
+    }
+
 
     private Graph removeUnusedEdges() {
         Graph result = new Graph();

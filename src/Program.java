@@ -26,7 +26,7 @@ public class Program {
             BufferedReader in = new BufferedReader(new FileReader(
                     //"graphen/G_1_2.txt"
                     //"graphen/Fluss.txt"
-            "graphen/Kostenminimal4.txt"
+            "graphen/Kostenminimal1.txt"
             ));
 
             //Graph g = new Graph(in, EDGE_LIST_WEIGHT,true);
@@ -36,7 +36,8 @@ public class Program {
 
             double start = System.nanoTime();
             //Graph result = g.fordFulkerson(startNode,endNode);
-            Graph result = g.CCA();
+            //Graph result = g.CCA();
+            Graph result = g.SSP();
             double end = System.nanoTime();
             in.close();
 
