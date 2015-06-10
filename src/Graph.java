@@ -553,8 +553,8 @@ public class Graph {
     public Double findBottelneckWithBalance(Graph g) {
         Double bottleNeck = Double.POSITIVE_INFINITY;
         for (Edge e : g.getEdges()) {
-            if (e.getWeight() < bottleNeck)
-                bottleNeck = e.getWeight();
+            if (e.getCapacity() < bottleNeck)
+                bottleNeck = e.getCapacity();
         }
         for (Node n : g.getNodes()) {
             if (n.getBalance() > 0 && n.getBalance() < bottleNeck)
@@ -1131,19 +1131,23 @@ public class Graph {
             Node rTo = residual.getNode(e.getEnd().getIndex());
             if (e.getFlow() == 0.0) {
                 Edge rEdge = new Edge(rFrom, rTo, e.getCost(), e.getCapacity());
+                rEdge.setWeight(rEdge.getCost());
                 residual.addEdge(rEdge);
                 rFrom.addEdge(rEdge);
             } else if (e.getFlow() < e.getCapacity()) {
                 Edge rEdge = new Edge(rTo, rFrom, (e.getCost() * -1 == 0.0) ? 0.0 : e.getCost() * -1, e.getFlow());
+                rEdge.setWeight(rEdge.getCost());
                 residual.addEdge(rEdge);
                 rTo.addEdge(rEdge);
                 Edge edge = new Edge(rFrom, rTo, e.getCost(), e.getFlow());
+                edge.setWeight(edge.getCost());
                 residual.addEdge(edge);
                 rFrom.addEdge(edge);
                 residual.setCost(residual.getCost() + e.getCost() * e.getFlow());
                 residual.setFlow(residual.getFlow() + e.getFlow());
             } else {
                 Edge rEdge = new Edge(rTo, rFrom, (e.getCost() * -1 == 0.0) ? 0.0 : e.getCost() * -1, e.getFlow());
+                rEdge.setWeight(rEdge.getCost());
                 residual.addEdge(rEdge);
                 rTo.addEdge(rEdge);
             }
@@ -1334,11 +1338,27 @@ public class Graph {
         result.setDirected(this.directed);
         result.nodes = this.nodes;
 
+        Double sourceFlow = 0.0;
+        Double sinkFlow = 0.0;
+        for (Node n : result.getNodes()) {
+            if (n.getBalance() > 0) {
+                sourceFlow += n.getBalance();
+            }
+            if (n.getBalance() < 0) {
+                sinkFlow += n.getBalance() * -1;
+            }
+        }
+        if (!sourceFlow.equals(sinkFlow)) {
+            System.out.println("b-Fluss nicht möglich");
+            return null;
+        }
+        result.setFlow(sourceFlow);
         // prepare Graph
         // use all negative Edges
         for (Edge e : this.getEdges()) {
             //to use dijkstra for shortest path
             e.setWeight(e.getCost());
+
 
             if (e.getCost() < 0) {
                 e.setFlow(e.getCapacity());
@@ -1350,59 +1370,68 @@ public class Graph {
         }
 
         Graph residualGraph = result.buildResidualGraph();
+
+        //find source and sink
+        LinkedList<Node> sources;
+        LinkedList<Node> sinks;
         while (!result.isBalanced()) {
 
-
-            //find source and sink
-            LinkedList<Node> sources = new LinkedList<>();
-            LinkedList<Node> sinks = new LinkedList<>();
-
+            sources = new LinkedList<>();
+            sinks = new LinkedList<>();
             for (Node n : residualGraph.getNodes()) {
                 if (n.getBalance() > 0) sources.add(n);
                 if (n.getBalance() < 0) sinks.add(n);
             }
 
             Graph shortestPath = residualGraph.getShortestPath(sources, sinks);
-            //if (shortestPath == null) break;
+            if (shortestPath == null) {
+                System.out.println("b-fluss nicht möglich. Keine Source/Sink Verbindung mehr gefunden");
+                return null;
+            }
 
             //find bottleneck
             Double bottleNeck = shortestPath.findBottelneckWithBalance(shortestPath);
-
+            if (bottleNeck == 0.0) {
+                bottleNeck = shortestPath.findBottelneckWithBalance(shortestPath);
+                System.out.println("Bottleneck = 0");
+                return null;
+            }
 
             for (Edge e : shortestPath.getEdges()) {
                 Node resultStart = result.getNode(e.getStart().getIndex());
                 Node resultEnd = result.getNode(e.getEnd().getIndex());
                 Edge resultEdge = result.connect(resultStart, resultEnd);
 
-
-                Edge rEdge = residualGraph.connect(e.getEnd(), e.getStart());
-                if (rEdge == null) {
-                    rEdge = new Edge(e.getEnd(), e.getStart(), bottleNeck);
-                    residualGraph.addEdge(rEdge);
-                } else {
-                        rEdge.setCapacity(rEdge.getCapacity() + bottleNeck);
-
-                }
-                e.getStart().setBalance(e.getStart().getBalance()-bottleNeck);
-                e.getEnd().setBalance(e.getEnd().getBalance()+bottleNeck);
-                if(e.getCapacity()-bottleNeck == 0){
-                    e.getStart().removeEdge(e);
-                    residualGraph.removeEdge(e);
-                }
-                else{
-                    e.setCapacity(e.getCapacity()-bottleNeck);
-                }
                 //update result Graph
                 if (resultEdge != null) {
                     resultStart.setBalance(resultStart.getBalance() - bottleNeck);
                     resultEnd.setBalance(resultEnd.getBalance() + bottleNeck);
                     resultEdge.setFlow(resultEdge.getFlow() + bottleNeck);
-                    result.setFlow(result.getFlow()+bottleNeck);
+
                 } else {
                     resultEdge = result.connect(resultEnd, resultStart);
                     resultStart.setBalance(resultStart.getBalance() - bottleNeck);
                     resultEnd.setBalance(resultEnd.getBalance() + bottleNeck);
                     resultEdge.setFlow(resultEdge.getFlow() - bottleNeck);
+                }
+                //update residual Graph
+                e.getStart().setBalance(e.getStart().getBalance() - bottleNeck);
+                e.getEnd().setBalance(e.getEnd().getBalance() + bottleNeck);
+                Edge reverseEdge = residualGraph.connect(e.getEnd(), e.getStart());
+                if (reverseEdge == null) {
+                    reverseEdge = new Edge(e.getEnd(), e.getStart(), e.getCost() * -1, bottleNeck);
+                    reverseEdge.setWeight(reverseEdge.getCost());
+                    e.getEnd().addEdge(reverseEdge);
+                    residualGraph.addEdge(reverseEdge);
+                } else {
+                    reverseEdge.setCapacity(reverseEdge.getCapacity() + bottleNeck);
+                }
+
+                if ((e.getCapacity() - bottleNeck) == 0.0) {
+                    e.getStart().removeEdge(e);
+                    residualGraph.removeEdge(e);
+                } else {
+                    e.setCapacity(e.getCapacity() - bottleNeck);
                 }
             }
         }
@@ -1411,14 +1440,30 @@ public class Graph {
 
     private Graph getShortestPath(LinkedList<Node> sources, LinkedList<Node> sinks) {
         Graph shortestPath;
+        LinkedList<Graph> llGraph = new LinkedList<>();
+
         for (Node source : sources) {
             for (Node sink : sinks) {
                 shortestPath = this.dijkstra(source, sink);
-                if (shortestPath.getEdges().size() > 0)
-                    return shortestPath;
+                if (shortestPath.getEdges().size() > 0) {
+                    shortestPath.nodes.clear();
+                    shortestPath.nodes.add(source);
+                    shortestPath.nodes.add(sink);
+                    llGraph.add(shortestPath);
+                }
             }
         }
-        return null;
+        Graph result = null;
+        Double maxWeight = Double.POSITIVE_INFINITY;
+        for(Graph g:llGraph){
+            if(maxWeight>g.getTotalWeight()){
+                maxWeight = g.getTotalWeight();
+                result = g;
+            }
+        }
+
+        return result;
+
     }
 
 
