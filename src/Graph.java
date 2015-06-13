@@ -83,12 +83,15 @@ public class Graph {
      * @return Graph
      */
     public Graph clone() {
+
         try {
             super.clone();
         } catch (Exception e) {
             //System.out.println("Cloning not supported by "+this.getClass());
         }
-        return new Graph(this.getNodes(), this.getEdges());
+        Graph result = new Graph(this.getNodes(), this.getEdges());
+        result.setDirected(this.directed);
+        return result;
     }
 
     /**
@@ -758,7 +761,7 @@ public class Graph {
     /**
      * Solving Traveling Sales Man Problem
      * - by trying all Tours (Brute Force Algorithm)
-     * <p/>
+     * <p>
      * - including Branch and Bound
      *
      * @param startNode Node
@@ -796,7 +799,7 @@ public class Graph {
     /**
      * Solving Traveling Sales Man Problem
      * - by trying all Tours (Brute Force Algorithm)
-     * <p/>
+     * <p>
      * - including Branch and Bound
      *
      * @param startNode    Node
@@ -879,12 +882,12 @@ public class Graph {
 
         this.unVisitNodes();
         Graph workingGraph = this.clone();
+        workingGraph.setDirected(this.directed);
         Node newStartnode = workingGraph.getNode(startNode.getIndex());
         /**
          * initialize
          */
         Edge currentEdge;
-
 
         PriorityQueue<Edge> prioEdgeQueue = new PriorityQueue<>();
         prioEdgeQueue.addAll(newStartnode.getEdges());
@@ -930,13 +933,13 @@ public class Graph {
                  * put Nodes and Edges from StartGraph into Endgraph
                  */
                 currentEndGraph.edges.addAll(currentStartGraph.getEdges());
-                currentEndGraph.setTotalWeight(currentStartGraph.getTotalWeight());
+                currentEndGraph.setTotalWeight(currentStartGraph.getTotalWeight() + connectingEdge.getWeight());
                 currentEndGraph.nodes.addAll(currentStartGraph.getNodes());
 
                 /**
                  * Add the connecting Edge to the endNodeGraph
                  */
-                currentEndGraph.addToTotalWeight(connectingEdge.getWeight());
+                //currentEndGraph.addToTotalWeight(connectingEdge.getWeight());
 
                 currentEndGraph.addNode(currentEdge.getEnd());
                 currentEndGraph.addEdge(connectingEdge);
@@ -955,13 +958,13 @@ public class Graph {
                      * put Nodes and Edges from StartGraph into Endgraph
                      */
                     currentEndGraph.edges = currentStartGraph.getEdges();
-                    currentEndGraph.setTotalWeight(currentStartGraph.getTotalWeight());
+                    currentEndGraph.setTotalWeight(currentStartGraph.getTotalWeight() + connectingEdge.getWeight());
                     currentEndGraph.nodes = currentStartGraph.getNodes();
 
                     /**
                      * Add the connecting Edge Weight to the endNodeGraph
                      */
-                    currentEndGraph.addToTotalWeight(connectingEdge.getWeight());
+                    //currentEndGraph.addToTotalWeight(connectingEdge.getWeight());
 
                 }
             }
@@ -1045,9 +1048,11 @@ public class Graph {
             }
         } while (!this.checkAllVisited());
 
-        if (distance.get(end.getIndex()) == Double.POSITIVE_INFINITY || returnCycle) {
+        if (distance.get(end.getIndex()) == Double.POSITIVE_INFINITY) {
             return null;
         }
+        if (returnCycle)
+            return null;
 
         Node tmpNode = end;
         while (tmpNode != StartNode) {
@@ -1055,6 +1060,8 @@ public class Graph {
             Node nextNode = this.getNode(prev.get(tmpNode.getIndex()));
             Edge connectingEdge = this.connect(nextNode, tmpNode);
             result.addEdge(connectingEdge);
+            if (connectingEdge == null)
+                connectingEdge = this.connect(tmpNode, nextNode);
             result.addToTotalWeight(connectingEdge.getWeight());
             tmpNode = nextNode;
         }
@@ -1131,23 +1138,20 @@ public class Graph {
             Node rTo = residual.getNode(e.getEnd().getIndex());
             if (e.getFlow() == 0.0) {
                 Edge rEdge = new Edge(rFrom, rTo, e.getCost(), e.getCapacity());
-                rEdge.setWeight(rEdge.getCost());
                 residual.addEdge(rEdge);
                 rFrom.addEdge(rEdge);
             } else if (e.getFlow() < e.getCapacity()) {
                 Edge rEdge = new Edge(rTo, rFrom, (e.getCost() * -1 == 0.0) ? 0.0 : e.getCost() * -1, e.getFlow());
-                rEdge.setWeight(rEdge.getCost());
                 residual.addEdge(rEdge);
                 rTo.addEdge(rEdge);
-                Edge edge = new Edge(rFrom, rTo, e.getCost(), e.getFlow());
-                edge.setWeight(edge.getCost());
+
+                Edge edge = new Edge(rFrom, rTo, e.getCost(), e.getCapacity() - e.getFlow());
                 residual.addEdge(edge);
                 rFrom.addEdge(edge);
                 residual.setCost(residual.getCost() + e.getCost() * e.getFlow());
                 residual.setFlow(residual.getFlow() + e.getFlow());
             } else {
                 Edge rEdge = new Edge(rTo, rFrom, (e.getCost() * -1 == 0.0) ? 0.0 : e.getCost() * -1, e.getFlow());
-                rEdge.setWeight(rEdge.getCost());
                 residual.addEdge(rEdge);
                 rTo.addEdge(rEdge);
             }
@@ -1359,7 +1363,6 @@ public class Graph {
             //to use dijkstra for shortest path
             e.setWeight(e.getCost());
 
-
             if (e.getCost() < 0) {
                 e.setFlow(e.getCapacity());
                 //updating Balance in start and end
@@ -1369,15 +1372,13 @@ public class Graph {
             result.addEdge(e);
         }
 
-        Graph residualGraph = result.buildResidualGraph();
 
+        Graph residualGraph = result.buildResidualGraph();
         //find source and sink
-        LinkedList<Node> sources;
-        LinkedList<Node> sinks;
+        LinkedList<Node> sources = new LinkedList<>();
+        LinkedList<Node> sinks = new LinkedList<>();
         while (!result.isBalanced()) {
 
-            sources = new LinkedList<>();
-            sinks = new LinkedList<>();
             for (Node n : residualGraph.getNodes()) {
                 if (n.getBalance() > 0) sources.add(n);
                 if (n.getBalance() < 0) sinks.add(n);
@@ -1391,41 +1392,27 @@ public class Graph {
 
             //find bottleneck
             Double bottleNeck = shortestPath.findBottelneckWithBalance(shortestPath);
-            if (bottleNeck == 0.0) {
-                bottleNeck = shortestPath.findBottelneckWithBalance(shortestPath);
-                System.out.println("Bottleneck = 0");
-                return null;
-            }
 
             for (Edge e : shortestPath.getEdges()) {
                 Node resultStart = result.getNode(e.getStart().getIndex());
                 Node resultEnd = result.getNode(e.getEnd().getIndex());
-                Edge resultEdge = result.connect(resultStart, resultEnd);
+
+                resultStart.setBalance(resultStart.getBalance() - bottleNeck);
+                resultEnd.setBalance(resultEnd.getBalance() + bottleNeck);
 
                 //update result Graph
+                Edge resultEdge = result.connect(resultStart, resultEnd);
                 if (resultEdge != null) {
-                    resultStart.setBalance(resultStart.getBalance() - bottleNeck);
-                    resultEnd.setBalance(resultEnd.getBalance() + bottleNeck);
                     resultEdge.setFlow(resultEdge.getFlow() + bottleNeck);
 
                 } else {
                     resultEdge = result.connect(resultEnd, resultStart);
-                    resultStart.setBalance(resultStart.getBalance() - bottleNeck);
-                    resultEnd.setBalance(resultEnd.getBalance() + bottleNeck);
                     resultEdge.setFlow(resultEdge.getFlow() - bottleNeck);
                 }
+
                 //update residual Graph
                 e.getStart().setBalance(e.getStart().getBalance() - bottleNeck);
                 e.getEnd().setBalance(e.getEnd().getBalance() + bottleNeck);
-                Edge reverseEdge = residualGraph.connect(e.getEnd(), e.getStart());
-                if (reverseEdge == null) {
-                    reverseEdge = new Edge(e.getEnd(), e.getStart(), e.getCost() * -1, bottleNeck);
-                    reverseEdge.setWeight(reverseEdge.getCost());
-                    e.getEnd().addEdge(reverseEdge);
-                    residualGraph.addEdge(reverseEdge);
-                } else {
-                    reverseEdge.setCapacity(reverseEdge.getCapacity() + bottleNeck);
-                }
 
                 if ((e.getCapacity() - bottleNeck) == 0.0) {
                     e.getStart().removeEdge(e);
@@ -1433,7 +1420,19 @@ public class Graph {
                 } else {
                     e.setCapacity(e.getCapacity() - bottleNeck);
                 }
+
+                Edge reverseEdge = residualGraph.connect(e.getEnd(), e.getStart());
+                if (reverseEdge == null) {
+                    reverseEdge = new Edge(e.getEnd(), e.getStart(), e.getCost() * -1, bottleNeck);
+                    e.getEnd().addEdge(reverseEdge);
+                    residualGraph.addEdge(reverseEdge);
+                } else {
+                    reverseEdge.setCapacity(reverseEdge.getCapacity() + bottleNeck);
+                }
+
             }
+            sources.clear();
+            sinks.clear();
         }
         return result;
     }
@@ -1445,7 +1444,9 @@ public class Graph {
         for (Node source : sources) {
             for (Node sink : sinks) {
                 shortestPath = this.dijkstra(source, sink);
+                //shortestPath = this.bellmanFordMoore(source, sink,false);
                 if (shortestPath.getEdges().size() > 0) {
+
                     shortestPath.nodes.clear();
                     shortestPath.nodes.add(source);
                     shortestPath.nodes.add(sink);
@@ -1455,8 +1456,8 @@ public class Graph {
         }
         Graph result = null;
         Double maxWeight = Double.POSITIVE_INFINITY;
-        for(Graph g:llGraph){
-            if(maxWeight>g.getTotalWeight()){
+        for (Graph g : llGraph) {
+            if (maxWeight > g.getTotalWeight()) {
                 maxWeight = g.getTotalWeight();
                 result = g;
             }
