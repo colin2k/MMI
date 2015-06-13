@@ -66,7 +66,7 @@ public class Edge implements Comparable<Edge> {
     public Edge(Node i, Node j, Double w) {
         this.start = i;
         this.end = j;
-
+        //this.weight=w;
         this.capacity= w;
         this.flow = 0.0;
     }
@@ -85,6 +85,7 @@ public class Edge implements Comparable<Edge> {
         this.end = j;
         this.capacity= u;
 
+        this.weight =c;
         this.cost = c;
         this.flow = 0.0;
     }
