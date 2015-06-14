@@ -941,15 +941,15 @@ public class Graph {
                  */
                 //currentEndGraph.addToTotalWeight(connectingEdge.getWeight());
 
-                currentEndGraph.addNode(currentEdge.getEnd());
+                currentEndGraph.addNode(connectingEdge.getEnd());
                 currentEndGraph.addEdge(connectingEdge);
-                currentEdge.getEnd().visit();
+                connectingEdge.getEnd().visit();
                 /**
                  * add all Edges from endnode to priority queue + the way travled already
                  */
                 for (Edge enqueEdge : currentEdge.getEnd().getEdges()) {
                     if (!enqueEdge.getEnd().getVisited()) {
-                        prioEdgeQueue.add(new Edge(enqueEdge.getStart(), enqueEdge.getEnd(), enqueEdge.getWeight() + currentStartGraph.getTotalWeight()));
+                        prioEdgeQueue.add(new Edge(enqueEdge.getStart(), enqueEdge.getEnd(),connectingEdge.getWeight() + enqueEdge.getWeight() + currentStartGraph.getTotalWeight()));
                     }
                 }
             } else {
@@ -960,11 +960,7 @@ public class Graph {
                     currentEndGraph.edges = currentStartGraph.getEdges();
                     currentEndGraph.setTotalWeight(currentStartGraph.getTotalWeight() + connectingEdge.getWeight());
                     currentEndGraph.nodes = currentStartGraph.getNodes();
-
-                    /**
-                     * Add the connecting Edge Weight to the endNodeGraph
-                     */
-                    //currentEndGraph.addToTotalWeight(connectingEdge.getWeight());
+                    currentEndGraph.addEdge(connectingEdge);
 
                 }
             }
@@ -1015,8 +1011,6 @@ public class Graph {
             }
             for (Edge e : this.getEdges()) {
                 if (distance.get(e.getStart().getIndex()) + e.getCost() < distance.get(e.getEnd().getIndex())) {
-                    //System.out.println("Zyklus gefunden:" + e + "\n");
-
 
                     //get Cycle
                     this.unVisitNodes();
@@ -1032,6 +1026,7 @@ public class Graph {
 
                     this.unVisitNodes();
                     result.setFlow(Double.POSITIVE_INFINITY);
+
                     //extract cycle
                     while (!Start.getVisited()) {
                         Start.visit();
@@ -1365,6 +1360,7 @@ public class Graph {
 
             if (e.getCost() < 0) {
                 e.setFlow(e.getCapacity());
+
                 //updating Balance in start and end
                 e.getStart().setBalance(e.getStart().getBalance() - e.getCapacity());
                 e.getEnd().setBalance(e.getEnd().getBalance() + e.getCapacity());
@@ -1372,13 +1368,11 @@ public class Graph {
             result.addEdge(e);
         }
 
-
-        Graph residualGraph = result.buildResidualGraph();
         //find source and sink
+        Graph residualGraph = result.buildResidualGraph();
         LinkedList<Node> sources = new LinkedList<>();
         LinkedList<Node> sinks = new LinkedList<>();
         while (!result.isBalanced()) {
-
             for (Node n : residualGraph.getNodes()) {
                 if (n.getBalance() > 0) sources.add(n);
                 if (n.getBalance() < 0) sinks.add(n);
@@ -1411,6 +1405,7 @@ public class Graph {
                 }
 
                 //update residual Graph
+
                 e.getStart().setBalance(e.getStart().getBalance() - bottleNeck);
                 e.getEnd().setBalance(e.getEnd().getBalance() + bottleNeck);
 
@@ -1451,6 +1446,7 @@ public class Graph {
                     shortestPath.nodes.add(source);
                     shortestPath.nodes.add(sink);
                     llGraph.add(shortestPath);
+                    return shortestPath;
                 }
             }
         }

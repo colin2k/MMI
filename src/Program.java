@@ -26,11 +26,11 @@ public class Program {
             BufferedReader in = new BufferedReader(new FileReader(
                     //"graphen/G_1_2.txt"
                     //"graphen/Fluss.txt"
-                "graphen/Kostenminimal4.txt"
+                    "graphen/Kostenminimal4.txt"
             ));
 
             //Graph g = new Graph(in, EDGE_LIST_WEIGHT,true);
-            Graph g = new Graph(in, EDGE_LIST_BALANCED,true);
+            Graph g = new Graph(in, EDGE_LIST_BALANCED, true);
             //Node startNode = g.getNode(0);
             //Node endNode = g.getNode(7);
 
