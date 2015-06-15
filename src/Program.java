@@ -16,6 +16,7 @@ public class Program {
     final static int EDGE_LIST = 1;
     final static int EDGE_LIST_WEIGHT = 2;
     final static int EDGE_LIST_BALANCED = 3;
+    final static int EDGE_LIST_MATCHING = 4;
 
     public static void main(String[] args) {
 
@@ -26,18 +27,20 @@ public class Program {
             BufferedReader in = new BufferedReader(new FileReader(
                     //"graphen/G_1_2.txt"
                     //"graphen/Fluss.txt"
-                    "graphen/Kostenminimal5.txt"
+                    "graphen/Matching2_100_100.txt"
             ));
 
             //Graph g = new Graph(in, EDGE_LIST_WEIGHT,true);
-            Graph g = new Graph(in, EDGE_LIST_BALANCED, true);
+            //Graph g = new Graph(in, EDGE_LIST_BALANCED, true);
+            Graph g = new Graph(in, EDGE_LIST_MATCHING, true);
             //Node startNode = g.getNode(0);
             //Node endNode = g.getNode(7);
 
             double start = System.nanoTime();
             //Graph result = g.fordFulkerson(startNode,endNode);
             //Graph result = g.CCA();
-            Graph result = g.SSP();
+            //Graph result = g.SSP();
+            Graph result = g.maximumMatching();
             double end = System.nanoTime();
             in.close();
 

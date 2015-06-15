@@ -13,16 +13,31 @@ import java.util.*;
 
 public class Graph {
 
-    final static int AD_MATRIX = 0;
-    final static int EDGE_LIST = 1;
-    final static int EDGE_LIST_WEIGHT = 2;
-    final static int EDGE_LIST_BALANCED = 3;
-
     private List<Node> nodes;
     private List<Edge> edges;
 
     private Double totalWeight;
     private Double flow;
+    private int groupCount;
+    private int matchings;
+
+    public int getMatchings() {
+        return matchings;
+    }
+
+    public void setMatchings(int matchings) {
+        this.matchings = matchings;
+    }
+
+
+    public int getGroupCount() {
+        return groupCount;
+    }
+
+    public void setGroupCount(int groupCount) {
+        this.groupCount = groupCount;
+    }
+
 
     public Double getCost() {
 
@@ -186,18 +201,29 @@ public class Graph {
      * @return String
      */
     public String toString() {
-        String result = "Nodes: [";
-        for (Node n : this.nodes) {
-            result += n;
+        String result;
+        if(groupCount!= 0){
+
+            result = "Edges:\n";
+            for (Edge e : this.edges) {
+                result += e + "\n";
+            }
+            result += "Matchings:"+this.getMatchings();
         }
-        result += "]\nEdges:\n";
-        result += "Start,Ende,Kapazität/Fluss,Kosten\n";
-        for (Edge e : this.edges) {
-            result += e + "\n";
+        else {
+            result = "Nodes: [";
+            for (Node n : this.nodes) {
+                result += n;
+            }
+            result += "]\nEdges:\n";
+            result += "Start,Ende,Kapazität/Fluss,Kosten\n";
+            for (Edge e : this.edges) {
+                result += e + "\n";
+            }
+            result += "\nWeight:" + this.getTotalWeight();
+            result += "\nFlow:" + this.getFlow();
+            result += "\nCost:" + this.getCost();
         }
-        result += "\nWeight:" + this.getTotalWeight();
-        result += "\nFlow:" + this.getFlow();
-        result += "\nCost:" + this.getCost();
         return result;
     }
 
@@ -282,7 +308,9 @@ public class Graph {
         try {
             // get number of nodes from first line
             int nodeCount = Integer.parseInt(source.readLine().replaceAll("\\s", ""));
-
+            int groupcount = 0;
+            if(fileType == Program.EDGE_LIST_MATCHING)
+                this.setGroupCount(Integer.parseInt(source.readLine().replaceAll("\\s", "")));
 
             for (int i = 0; i < nodeCount; i++) {
                 // create Node and add to Graph
@@ -296,7 +324,7 @@ public class Graph {
 
             for (int currentNode = 0; (currentLine = source.readLine()) != null; currentNode++) {
                 // for each node in the current Line
-                if (fileType == AD_MATRIX) {
+                if (fileType == Program.AD_MATRIX) {
                     // remove spaces
                     currentLine = currentLine.replaceAll("\\s", "");
                     for (int i = 0; i < nodeCount; i++) {
@@ -320,7 +348,7 @@ public class Graph {
                             return;
                         }
                     }
-                } else if (fileType == EDGE_LIST) {
+                } else if (fileType == Program.EDGE_LIST) {
                     String[] straBuf = currentLine.split("\\s");
                     Node nodeFrom = this.nodes
                             .get(Integer.parseInt(straBuf[0]));
@@ -331,7 +359,7 @@ public class Graph {
                     nodeFrom.addEdge(newEdge);
                     nodeTo.addEdge(newEdge);
                     this.addEdge(newEdge);
-                } else if (fileType == EDGE_LIST_WEIGHT) {
+                } else if (fileType == Program.EDGE_LIST_WEIGHT) {
                     String[] straBuf = currentLine.split("\\s");
                     Node nodeFrom = this.nodes.get(Integer.parseInt(straBuf[0]));
                     Node nodeTo = this.nodes.get(Integer.parseInt(straBuf[1]));
@@ -350,7 +378,7 @@ public class Graph {
 
                     this.addEdge(newEdge);
 
-                } else if (fileType == EDGE_LIST_BALANCED) {
+                } else if (fileType == Program.EDGE_LIST_BALANCED) {
                     String[] straBuf = currentLine.split("\\s");
 
 
@@ -381,7 +409,26 @@ public class Graph {
 
                     this.addEdge(newEdge);
 
-                } else {
+                } else if (fileType == Program.EDGE_LIST_MATCHING) {
+                    String[] straBuf = currentLine.split("\\s");
+                    Node nodeFrom = this.nodes
+                            .get(Integer.parseInt(straBuf[0]));
+                    Node nodeTo = this.nodes.get(Integer.parseInt(straBuf[1]));
+
+                    Edge newEdge = new Edge(nodeFrom, nodeTo);
+
+                    if (!this.directed) {
+                        Edge newEdgeReverse = new Edge(nodeTo,nodeFrom);
+                        nodeFrom.addEdge(newEdgeReverse);
+                        nodeTo.addEdge(newEdgeReverse);
+                        this.addEdge(newEdgeReverse);
+                    }
+
+                    nodeFrom.addEdge(newEdge);
+                    nodeTo.addEdge(newEdge);
+                    this.addEdge(newEdge);
+                }
+                else {
                     System.out.println("Fehler: Falscher Dateityp");
                 }
             }
@@ -1201,7 +1248,6 @@ public class Graph {
                     // add start of current Edge to result Graph
                     result.addNode(currentEdge.getEnd());
 
-
                     // add current Edge to result Graph
                     result.addEdge(currentEdge);
                     if (currentEdge.getEnd() == end) {
@@ -1487,6 +1533,55 @@ public class Graph {
 
 
         return result;
+    }
+    public Graph maximumMatching(){
+        Graph result = new Graph();
+        result.setGroupCount(this.getGroupCount());
+        LinkedList<Edge> llEdge = new LinkedList<>();
+        llEdge.addAll(this.getEdges());
+        result.nodes.addAll(this.getNodes());
+
+        for(int i = 0;i<llEdge.size();++i){
+            Edge e = llEdge.get(i);
+            for(Edge e1:e.getStart().getEdges()){
+                if(e!=e1){
+                    llEdge.remove(e1);
+                }
+            }
+            for(Edge e1:e.getEnd().getEdges()){
+                if(e!=e1){
+                    llEdge.remove(e1);
+                }
+            }
+
+        }
+
+
+        Node superSource = new Node(this.getNodes().size());
+        result.addNode(superSource);
+        Node superSink = new Node(this.getNodes().size()+1);
+        result.addNode(superSink);
+        for(Edge e:llEdge){
+            Edge sourceEdge = new Edge(superSource,e.getStart(),1.0);
+            Edge sinkEdge = new Edge(e.getEnd(),superSink,1.0);
+
+            e.getEnd().addEdge(sinkEdge);
+            superSink.addEdge(sinkEdge);
+            superSource.addEdge(sourceEdge);
+            e.getStart().addEdge(sourceEdge);
+            e.setCapacity(1.0);
+            e.setFlow(0.0);
+
+            result.addEdge(e);
+            result.addEdge(sourceEdge);
+            result.addEdge(sinkEdge);
+        }
+
+        Graph maxFluss = result.fordFulkerson(superSource,superSink);
+
+        result.setMatchings(result.getEdges().size()-superSource.getEdges().size()-superSink.getEdges().size());
+        return result;
+
     }
 
 }
