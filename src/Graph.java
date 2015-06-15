@@ -202,15 +202,14 @@ public class Graph {
      */
     public String toString() {
         String result;
-        if(groupCount!= 0){
+        if (groupCount != 0) {
 
             result = "Edges:\n";
             for (Edge e : this.edges) {
                 result += e + "\n";
             }
-            result += "Matchings:"+this.getMatchings();
-        }
-        else {
+            result += "Matchings:" + this.getMatchings();
+        } else {
             result = "Nodes: [";
             for (Node n : this.nodes) {
                 result += n;
@@ -309,7 +308,7 @@ public class Graph {
             // get number of nodes from first line
             int nodeCount = Integer.parseInt(source.readLine().replaceAll("\\s", ""));
             int groupcount = 0;
-            if(fileType == Program.EDGE_LIST_MATCHING)
+            if (fileType == Program.EDGE_LIST_MATCHING)
                 this.setGroupCount(Integer.parseInt(source.readLine().replaceAll("\\s", "")));
 
             for (int i = 0; i < nodeCount; i++) {
@@ -418,7 +417,7 @@ public class Graph {
                     Edge newEdge = new Edge(nodeFrom, nodeTo);
 
                     if (!this.directed) {
-                        Edge newEdgeReverse = new Edge(nodeTo,nodeFrom);
+                        Edge newEdgeReverse = new Edge(nodeTo, nodeFrom);
                         nodeFrom.addEdge(newEdgeReverse);
                         nodeTo.addEdge(newEdgeReverse);
                         this.addEdge(newEdgeReverse);
@@ -427,8 +426,7 @@ public class Graph {
                     nodeFrom.addEdge(newEdge);
                     nodeTo.addEdge(newEdge);
                     this.addEdge(newEdge);
-                }
-                else {
+                } else {
                     System.out.println("Fehler: Falscher Dateityp");
                 }
             }
@@ -808,7 +806,7 @@ public class Graph {
     /**
      * Solving Traveling Sales Man Problem
      * - by trying all Tours (Brute Force Algorithm)
-     * <p>
+     * <p/>
      * - including Branch and Bound
      *
      * @param startNode Node
@@ -846,7 +844,7 @@ public class Graph {
     /**
      * Solving Traveling Sales Man Problem
      * - by trying all Tours (Brute Force Algorithm)
-     * <p>
+     * <p/>
      * - including Branch and Bound
      *
      * @param startNode    Node
@@ -996,7 +994,7 @@ public class Graph {
                  */
                 for (Edge enqueEdge : currentEdge.getEnd().getEdges()) {
                     if (!enqueEdge.getEnd().getVisited()) {
-                        prioEdgeQueue.add(new Edge(enqueEdge.getStart(), enqueEdge.getEnd(),connectingEdge.getWeight() + enqueEdge.getWeight() + currentStartGraph.getTotalWeight()));
+                        prioEdgeQueue.add(new Edge(enqueEdge.getStart(), enqueEdge.getEnd(), connectingEdge.getWeight() + enqueEdge.getWeight() + currentStartGraph.getTotalWeight()));
                     }
                 }
             } else {
@@ -1039,8 +1037,8 @@ public class Graph {
 
         LinkedList<Node> llNode = new LinkedList<>();
         llNode.add(StartNode);
-        for(Node n:this.getNodes()){
-            if(n!= StartNode)
+        for (Node n : this.getNodes()) {
+            if (n != StartNode)
                 llNode.add(n);
         }
 
@@ -1491,10 +1489,12 @@ public class Graph {
 
         for (Node source : sources) {
             for (Node sink : sinks) {
-                shortestPath = this.bellmanFordMoore(source, sink,false);
+                shortestPath = this.bellmanFordMoore(source, sink, false);
 
-                if (shortestPath == null){break;}
-                if(shortestPath.getEdges().size() > 0) {
+                if (shortestPath == null) {
+                    break;
+                }
+                if (shortestPath.getEdges().size() > 0) {
 
                     shortestPath.nodes.clear();
                     shortestPath.nodes.add(source);
@@ -1534,33 +1534,45 @@ public class Graph {
 
         return result;
     }
-    public Graph maximumMatching(){
+
+    public Graph maximumMatching() {
+
+        // init result Graph as directed with parent groupCount
         Graph result = new Graph();
         result.setDirected(true);
         result.setGroupCount(this.getGroupCount());
-        LinkedList<Edge> llEdge = new LinkedList<>();
-        llEdge.addAll(this.getEdges());
+
         result.nodes.addAll(this.getNodes());
         result.edges.addAll(this.getEdges());
+
         Node superSource = new Node(this.getNodes().size());
-        Node superSink = new Node(this.getNodes().size()+1);
+        Node superSink = new Node(this.getNodes().size() + 1);
+
         result.addNode(superSource);
         result.addNode(superSink);
-        for(Edge e:this.getEdges()){
+
+        //Init Edge Capacity with 1.0
+        for (Edge e : this.getEdges()) {
             e.setCapacity(1.0);
         }
-        for(int i = 0;i<this.getNodes().size();++i){
+
+        /**
+         * connect Nodes 0-groupcount-1 to superSource
+         * connect Nodes groupcount-n-1 to superSink
+         * init capacity with 1.0
+         * init flow with 0.0
+         **/
+        for (int i = 0; i < this.getNodes().size(); ++i) {
 
             Node n = this.getNode(i);
-            if(i<this.getGroupCount()){
-                Edge sourceEdge = new Edge(superSource,n,1.0);
+            if (i < this.getGroupCount()) {
+                Edge sourceEdge = new Edge(superSource, n, 1.0);
                 sourceEdge.setFlow(0.0);
                 sourceEdge.setCapacity(1.0);
                 superSource.addEdge(sourceEdge);
                 result.addEdge(sourceEdge);
-            }
-            else{
-                Edge sinkEdge = new Edge(n,superSink,1.0);
+            } else {
+                Edge sinkEdge = new Edge(n, superSink, 1.0);
                 sinkEdge.setFlow(0.0);
                 sinkEdge.setCapacity(1.0);
                 n.addEdge(sinkEdge);
@@ -1568,20 +1580,31 @@ public class Graph {
             }
         }
 
-        Graph maxFluss = result.fordFulkerson(superSource,superSink);
+        //create maximum flow
+        Graph maxFluss = result.fordFulkerson(superSource, superSink);
+
+        //remove "SuperEdges"
         LinkedList<Edge> superEdges = new LinkedList<>();
         superEdges.addAll(superSink.getEdges());
         superEdges.addAll(superSource.getEdges());
-        for(Edge e:superEdges){
+        for(Edge e:result.getEdges()){
+            if(e.getEnd() == superSink){
+                e.getEnd().removeEdge(e);
+                superEdges.add(e);
+            }
+        }
+        for (Edge e : superEdges) {
             maxFluss.removeEdge(e);
             result.removeEdge(e);
         }
+
+        //Remove superSink/-Source
         result.nodes.remove(superSink);
         result.nodes.remove(superSource);
 
+        //set Matching according to Flow
         result.setMatchings(result.getFlow().intValue());
-        return maxFluss;
+        return result;
 
     }
-
 }
