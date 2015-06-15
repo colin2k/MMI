@@ -991,7 +991,12 @@ public class Graph {
 
 
         LinkedList<Node> llNode = new LinkedList<>();
-        llNode.addAll(this.getNodes());
+        llNode.add(StartNode);
+        for(Node n:this.getNodes()){
+            if(n!= StartNode)
+                llNode.add(n);
+        }
+
         Node currentNode;
 
         do {
@@ -1054,9 +1059,11 @@ public class Graph {
             result.addNode(tmpNode);
             Node nextNode = this.getNode(prev.get(tmpNode.getIndex()));
             Edge connectingEdge = this.connect(nextNode, tmpNode);
-            result.addEdge(connectingEdge);
             if (connectingEdge == null)
                 connectingEdge = this.connect(tmpNode, nextNode);
+            if (connectingEdge == null)
+                return null;
+            result.addEdge(connectingEdge);
             result.addToTotalWeight(connectingEdge.getWeight());
             tmpNode = nextNode;
         }
@@ -1438,9 +1445,10 @@ public class Graph {
 
         for (Node source : sources) {
             for (Node sink : sinks) {
-                shortestPath = this.dijkstra(source, sink);
-                //shortestPath = this.bellmanFordMoore(source, sink,false);
-                if (shortestPath.getEdges().size() > 0) {
+                shortestPath = this.bellmanFordMoore(source, sink,false);
+
+                if (shortestPath == null){break;}
+                if(shortestPath.getEdges().size() > 0) {
 
                     shortestPath.nodes.clear();
                     shortestPath.nodes.add(source);
