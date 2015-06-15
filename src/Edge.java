@@ -54,6 +54,8 @@ public class Edge implements Comparable<Edge> {
     public Edge(Node i, Node j) {
         this.start = i;
         this.end = j;
+        this.weight = 0.0;
+        this.cost = 0.0;
     }
 
     /**

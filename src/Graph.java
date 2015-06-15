@@ -1138,6 +1138,7 @@ public class Graph {
         //Init result graph Edges with Flow 0.0
         for (Edge e : this.getEdges()) {
             e.setFlow(0.0);
+            e.setCost(0.0);
             result.addEdge(e);
         }
         //residualGraph
@@ -1283,13 +1284,12 @@ public class Graph {
                 rEdge.setCapacity(rEdge.getCapacity() + bottleneck);
             } else {
                 rEdge = new Edge(e.getEnd(), e.getStart(), bottleneck);
+                e.getEnd().addEdge(rEdge);
                 this.addEdge(rEdge);
             }
 
-            e.getEnd().addEdge(rEdge);
-            if (e.getCapacity() - bottleneck > 0) {
+            if (e.getCapacity() - bottleneck != 0) {
                 e.setCapacity(e.getCapacity() - bottleneck);
-                e.setFlow(bottleneck + e.getFlow());
             } else {
                 this.removeEdge(e);
                 e.getStart().removeEdge(e);
@@ -1536,51 +1536,51 @@ public class Graph {
     }
     public Graph maximumMatching(){
         Graph result = new Graph();
+        result.setDirected(true);
         result.setGroupCount(this.getGroupCount());
         LinkedList<Edge> llEdge = new LinkedList<>();
         llEdge.addAll(this.getEdges());
         result.nodes.addAll(this.getNodes());
-
-        for(int i = 0;i<llEdge.size();++i){
-            Edge e = llEdge.get(i);
-            for(Edge e1:e.getStart().getEdges()){
-                if(e!=e1){
-                    llEdge.remove(e1);
-                }
-            }
-            for(Edge e1:e.getEnd().getEdges()){
-                if(e!=e1){
-                    llEdge.remove(e1);
-                }
-            }
-
-        }
-
-
+        result.edges.addAll(this.getEdges());
         Node superSource = new Node(this.getNodes().size());
-        result.addNode(superSource);
         Node superSink = new Node(this.getNodes().size()+1);
+        result.addNode(superSource);
         result.addNode(superSink);
-        for(Edge e:llEdge){
-            Edge sourceEdge = new Edge(superSource,e.getStart(),1.0);
-            Edge sinkEdge = new Edge(e.getEnd(),superSink,1.0);
-
-            e.getEnd().addEdge(sinkEdge);
-            superSink.addEdge(sinkEdge);
-            superSource.addEdge(sourceEdge);
-            e.getStart().addEdge(sourceEdge);
+        for(Edge e:this.getEdges()){
             e.setCapacity(1.0);
-            e.setFlow(0.0);
+        }
+        for(int i = 0;i<this.getNodes().size();++i){
 
-            result.addEdge(e);
-            result.addEdge(sourceEdge);
-            result.addEdge(sinkEdge);
+            Node n = this.getNode(i);
+            if(i<this.getGroupCount()){
+                Edge sourceEdge = new Edge(superSource,n,1.0);
+                sourceEdge.setFlow(0.0);
+                sourceEdge.setCapacity(1.0);
+                superSource.addEdge(sourceEdge);
+                result.addEdge(sourceEdge);
+            }
+            else{
+                Edge sinkEdge = new Edge(n,superSink,1.0);
+                sinkEdge.setFlow(0.0);
+                sinkEdge.setCapacity(1.0);
+                n.addEdge(sinkEdge);
+                result.addEdge(sinkEdge);
+            }
         }
 
         Graph maxFluss = result.fordFulkerson(superSource,superSink);
+        LinkedList<Edge> superEdges = new LinkedList<>();
+        superEdges.addAll(superSink.getEdges());
+        superEdges.addAll(superSource.getEdges());
+        for(Edge e:superEdges){
+            maxFluss.removeEdge(e);
+            result.removeEdge(e);
+        }
+        result.nodes.remove(superSink);
+        result.nodes.remove(superSource);
 
-        result.setMatchings(result.getEdges().size()-superSource.getEdges().size()-superSink.getEdges().size());
-        return result;
+        result.setMatchings(result.getFlow().intValue());
+        return maxFluss;
 
     }
 

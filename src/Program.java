@@ -27,7 +27,7 @@ public class Program {
             BufferedReader in = new BufferedReader(new FileReader(
                     //"graphen/G_1_2.txt"
                     //"graphen/Fluss.txt"
-                    "graphen/Matching2_100_100.txt"
+                    "graphen/Matching_100_100.txt"
             ));
 
             //Graph g = new Graph(in, EDGE_LIST_WEIGHT,true);
